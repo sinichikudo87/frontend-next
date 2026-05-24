@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -120px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  animation: bubbleUp 18s linear infinite;
+  box-shadow:
+    inset 0 0 20px rgba(255,255,255,0.15),
+    0 0 30px rgba(255,255,255,0.08);
+}
+
+.bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.bubble {
+  position: absolute;
+  bottom: -150px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  animation-name: bubbleFloat;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+
+  box-shadow:
+    inset 0 0 20px rgba(255,255,255,0.15),
+    0 0 30px rgba(255,255,255,0.08);
+}
+
+.bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+@keyframes bubbleFloat {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  25% {
+    transform: translate3d(40px, -25vh, 0) scale(1.05);
+  }
+
+  50% {
+    transform: translate3d(-30px, -55vh, 0) scale(1.12);
+  }
+
+  75% {
+    transform: translate3d(50px, -85vh, 0) scale(1.18);
+  }
+
+  100% {
+    transform: translate3d(-40px, -120vh, 0) scale(1.25);
+    opacity: 0;
+  }
+}
+
+@keyframes floatUpDown {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: floatUpDown 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.animate-glow {
+  animation: pulseGlow 2s infinite;
+}
