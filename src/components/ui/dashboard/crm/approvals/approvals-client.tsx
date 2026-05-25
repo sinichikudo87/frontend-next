@@ -43,6 +43,7 @@ export default function ApprovalPage() {
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [dataApproval, setDataApproval] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTenderId, setActiveTenderId] = useState<number | null>(null);
   const [openDocumentationModal, setOpenDocumentationModal] =
     useState(false);
 
@@ -328,9 +329,10 @@ export default function ApprovalPage() {
 
                           {/* DOC */}
                           <button
-                            onClick={() =>
-                              setOpenDocumentationModal(true)
-                            }
+                            onClick={() => {
+                              setActiveTenderId(item.id);
+                              setOpenDocumentationModal(true);
+                            }}
                             className="
                               h-10
                               px-4
@@ -626,7 +628,11 @@ export default function ApprovalPage() {
 
       <DocumentationModal
         open={openDocumentationModal}
-        onClose={() => setOpenDocumentationModal(false)}
+        tenderId={activeTenderId}
+        onClose={() => {
+          setOpenDocumentationModal(false);
+          setActiveTenderId(null);
+        }}
       />
     </DashboardLayout>
   );

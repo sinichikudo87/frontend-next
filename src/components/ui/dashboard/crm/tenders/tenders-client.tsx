@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 
 import { getTender } from "../../../../../lib/crm/tenders/view";
 import { updateStatusTenderHeader, updateStatusTenderDetail } from "../../../../../lib/crm/tenders/update";
-import { handleWhatsappShare } from "../../../../../lib/crm/tenders/whatsapp";
+import { handleWhatsappShareToCustomers } from "../../../../../lib/crm/tenders/whatsapp";
 
 import {
   Edit2,
@@ -356,7 +356,7 @@ export default function TendersKlient() {
                       
                       {/* SHARE BUTTON (MEMANGGIL HELPER BARU) */}
                       <button
-                        onClick={() => handleWhatsappShare(item as any)}
+                        onClick={() => handleWhatsappShareToCustomers(item as any)}
                         className="
                           w-10 h-10
                           rounded-xl

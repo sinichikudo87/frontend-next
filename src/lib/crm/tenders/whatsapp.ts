@@ -1,3 +1,4 @@
+import Swal from "sweetalert2";
 import { encryptId } from "../../../lib/helpers/encrypt";
 
 type UnitDetail = {
@@ -23,32 +24,42 @@ const getPdfUrl = (id: string | number) => {
 
 /* ================= WHATSAPP SHARE ================= */
 
-export const handleWhatsappShare = (item: FollowUp) => {
-  /* ================= GENERATE TOKEN ================= */
-  const secureToken = encryptId(String(item.id));
+export const handleWhatsappShareToCustomers = async (item: FollowUp) => {
+  try {
+    Swal.fire({
+      title: "Menyiapkan Tautan...",
+      text: "Sedang membuat link negosiasi dan menyiapkan pesan WhatsApp.",
+      background: "#0f172a",
+      color: "#fff",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
 
-  /* ================= URL ================= */
+    /* ================= GENERATE TOKEN ================= */
+    const secureToken = encryptId(String(item.id));
 
-  const domainUrl =
-    typeof window !== "undefined" ? window.location.origin : "";
+    /* ================= URL ================= */
+    const domainUrl =
+      typeof window !== "undefined" ? window.location.origin : "";
 
-  const negoUrl = `${domainUrl}/dashboard/crm/negosiasi?token=${secureToken}`;
-  const pdfUrl = getPdfUrl(item.id);
+    const negoUrl =
+        `${domainUrl}/dashboard/crm/negosiasi` +
+        `?id=${secureToken}` +
+        `&type=customer`;
+    const pdfUrl = getPdfUrl(item.id);
 
-  /* ================= DETAIL TEXT ================= */
-
-  const detailText = item.details
-    .map(
-      (d) =>
-        `🚘 *Unit:* ${d.category_name}
+    /* ================= DETAIL TEXT ================= */
+    const detailText = item.details
+      .map(
+        (d) =>
+          `🚘 *Unit:* ${d.category_name}
 📌 *Qty:* ${d.qty}
 💰 *Estimasi Biaya:* *Rp ${d.subtotal.toLocaleString("id-ID")}*`
-    )
-    .join("\n━━━━━━━━━━━━━━━\n");
+      )
+      .join("\n━━━━━━━━━━━━━━━\n");
 
-  /* ================= MESSAGE ================= */
-
-  const messageText = `Halo Kak *${item.customer}*, salam hangat! 👋
+    /* ================= MESSAGE ================= */
+    const messageText = `Halo Kak *${item.customer}*, salam hangat! 👋
 
 Kami ingin berbagi informasi bagi Kakak yang membutuhkan layanan transportasi premium. Berikut adalah salah satu penawaran unit terbaik yang kami sediakan:
 
@@ -72,7 +83,19 @@ Kami siap menyesuaikan layanan dengan kebutuhan spesifik Kakak. Jika berminat un
 
 Terima kasih dan semoga sukses selalu! ✨`;
 
-  const finalWhatsAppUrl = `https://wa.me/?text=${encodeURIComponent(messageText)}`;
+    const finalWhatsAppUrl = `https://wa.me/?text=${encodeURIComponent(messageText)}`;
 
-  window.open(finalWhatsAppUrl, "_blank");
+    // 2. Tutup SweetAlert tepat sebelum jendela WhatsApp dibuka
+    Swal.close();
+    window.open(finalWhatsAppUrl, "_blank");
+
+  } catch (err: any) {
+    Swal.fire({
+      icon: "error",
+      title: "Gagal",
+      text: err.message || "Gagal mengirim pesan WhatsApp",
+      background: "#0f172a",
+      color: "#fff",
+    });
+  }
 };

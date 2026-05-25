@@ -1,7 +1,7 @@
-import FormAccountsDeals from "@/components/ui/dashboard/crm/accounts-deals/page";
+import AccountsDealsUsers from "@/components/ui/dashboard/crm/accounts-deals/accounts-deals-users";
 
 export default function Page() {
   return (    
-    <FormAccountsDeals />
+    <AccountsDealsUsers />
   );
 }
