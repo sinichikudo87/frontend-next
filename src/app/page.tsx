@@ -51,6 +51,13 @@ export default function PortalPage() {
 
   const divisions = [
     {
+      name: "System Settings",
+      description: "Configure core system preferences.",
+      href: "/dashboard/settings/system",
+      gradient: "from-slate-600 to-slate-400",
+      icon: "⚙️",
+    },
+    {
       name: "B2B Management",
       description: "Business partnership management and enterprise collaboration.",
       href: "/dashboard/b2b_management",

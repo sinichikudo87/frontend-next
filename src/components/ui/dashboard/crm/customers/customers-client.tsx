@@ -4,8 +4,6 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
-import { getCustomer } from "../../../../../lib/crm/customers/view";
-
 import {
   Search,
   User,
@@ -28,74 +26,27 @@ type Customer = {
   is_active: number;
 };
 
-export default function CustomerPage() {
+interface FormCustomersProps {
+  initialData: Customer[];
+}
 
+export default function CustomerPage({ initialData }: FormCustomersProps) {
   const [search, setSearch] = useState("");
   const [openRow, setOpenRow] = useState<number | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Gunakan data dari SSR sebagai state awal
+  const [customers] = useState<Customer[]>(initialData);
 
   /* ================= PAGINATION ================= */
-
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
-  /* ================= FETCH ================= */
-
-  const fetchData = async () => {
-
-    try {
-
-      setLoading(true);
-
-      const res = await getCustomer(1);
-
-      if (res?.success && Array.isArray(res.data)) {
-
-        const mapped: Customer[] = res.data.map((item: any) => ({
-          id: Number(item.id),
-          name: item.name ?? "-",
-          phone: item.phone ?? "-",
-          email: item.email ?? "-",
-          address: item.address ?? "-",
-          is_active: Number(item.is_active ?? 1),
-        }));
-
-        setCustomers(mapped);
-
-      }
-
-    } catch (err) {
-
-      console.error(err);
-
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Gagal memuat data customer",
-        background: "#0f172a",
-        color: "#fff",
-      });
-
-    } finally {
-
-      setLoading(false);
-
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   /* ================= FILTER ================= */
-
   const filteredData = customers.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  /* ================= PAGINATION ================= */
-
+  /* ================= PAGINATION LOGIC ================= */
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
   const paginatedData = filteredData.slice(
@@ -103,361 +54,195 @@ export default function CustomerPage() {
     currentPage * pageSize
   );
 
+  // Reset ke halaman 1 jika user mengetik di kolom pencarian
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  /* ================= LOADING ================= */
-
-  if (loading) {
-
-    return (
-      <DashboardLayout>
-        <div className="p-6 text-white animate-pulse">
-          Memuat data customer...
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout>
-
       <div className="p-4 md:p-6 text-white space-y-6">
 
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:justify-between gap-4">
-
           <div>
-
             <div className="flex items-center gap-3">
-
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
                 <Users className="w-6 h-6 text-white" />
               </div>
-
               <div>
-
-                <h1 className="text-2xl font-bold">
-                  Customer Management
-                </h1>
-
+                <h1 className="text-2xl font-bold">Customer Management</h1>
                 <p className="text-sm text-white/50">
                   Total Customer: {filteredData.length}
                 </p>
-
               </div>
-
             </div>
-
           </div>
 
           {/* SEARCH */}
           <div className="relative w-full md:w-[320px]">
-
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari customer..."
-              className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none"
+              className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none animate-fade-in"
             />
-
           </div>
-
         </div>
 
         {/* LIST */}
         <div className="space-y-4">
-
           {paginatedData.length === 0 ? (
-
             <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
               Tidak ada data customer
             </div>
-
           ) : (
-
             paginatedData.map((item) => {
-
               const isOpen = openRow === item.id;
 
               return (
-
                 <div
                   key={item.id}
                   className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden"
                 >
-
-                  {/* HEADER */}
+                  {/* ROW HEADER */}
                   <div className="p-5 flex items-center justify-between">
-
-                    {/* LEFT */}
+                    {/* LEFT INFO */}
                     <div className="flex items-center gap-4">
-
-                      <div
-                        className="
-                          w-14 h-14
-                          rounded-2xl
-                          bg-gradient-to-br from-cyan-500/20 to-blue-500/20
-                          border border-cyan-400/20
-                          flex items-center justify-center
-                        "
-                      >
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-400/20 flex items-center justify-center">
                         <User className="w-6 h-6 text-cyan-400" />
                       </div>
 
                       <div>
-
                         <div className="flex items-center gap-3 flex-wrap">
-
-                          <h2 className="text-lg font-bold text-white">
-                            {item.name}
-                          </h2>
-
+                          <h2 className="text-lg font-bold text-white">{item.name}</h2>
                           <span
-                            className={`
-                              px-3 py-1 rounded-full text-xs font-semibold border
-                              ${
-                                item.is_active === 1
-                                  ? "bg-green-500/10 border-green-500/20 text-green-400"
-                                  : "bg-red-500/10 border-red-500/20 text-red-400"
-                              }
-                            `}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                              item.is_active === 1
+                                ? "bg-green-500/10 border-green-500/20 text-green-400"
+                                : "bg-red-500/10 border-red-500/20 text-red-400"
+                            }`}
                           >
-                            {item.is_active === 1
-                              ? "ACTIVE"
-                              : "INACTIVE"}
+                            {item.is_active === 1 ? "ACTIVE" : "INACTIVE"}
                           </span>
-
                         </div>
 
                         <div className="flex items-center gap-2 text-sm text-white/50 mt-1">
-
                           <Phone className="w-4 h-4" />
                           <span>{item.phone}</span>
-
                           <span>•</span>
-
                           <Mail className="w-4 h-4" />
                           <span>{item.email}</span>
-
                         </div>
-
                       </div>
-
                     </div>
 
-                    {/* ACTION */}
+                    {/* ACTIONS */}
                     <div className="flex items-center gap-2">
-
-                      {/* MENU */}
                       <button
                         onClick={() => {
-
-                          // Swal.fire({
-                          //   title: item.name,
-                          //   text: "Customer action clicked",
-                          //   icon: "info",
-                          //   background: "#0f172a",
-                          //   color: "#fff",
-                          //   timer: 1200,
-                          //   showConfirmButton: false,
-                          // });
-
+                          // Tambahkan aksi tombol menu di sini jika perlu
                         }}
-                        className="
-                          w-10 h-10
-                          rounded-xl
-                          bg-white/5
-                          border border-white/10
-                          hover:bg-white/10
-                          transition
-                          flex items-center justify-center
-                        "
+                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition flex items-center justify-center"
                       >
                         <MoreVertical className="w-5 h-5 text-white/70" />
                       </button>
 
-                      {/* EXPAND */}
                       <button
-                        onClick={() =>
-                          setOpenRow(isOpen ? null : item.id)
-                        }
-                        className={`
-                          w-10 h-10
-                          rounded-xl
-                          border border-white/10
-                          flex items-center justify-center
-                          transition
-                          ${
-                            isOpen
-                              ? "bg-cyan-500 text-black"
-                              : "bg-white/5 hover:bg-white/10"
-                          }
-                        `}
+                        onClick={() => setOpenRow(isOpen ? null : item.id)}
+                        className={`w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center transition ${
+                          isOpen ? "bg-cyan-500 text-black" : "bg-white/5 hover:bg-white/10"
+                        }`}
                       >
                         <ChevronDown
-                          className={`
-                            w-5 h-5
-                            transition-transform duration-300
-                            ${isOpen ? "rotate-180" : ""}
-                          `}
+                          className={`w-5 h-5 transition-transform duration-300 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
                         />
                       </button>
-
                     </div>
-
                   </div>
 
-                  {/* DETAILS */}
+                  {/* DETAILS ACCORDION */}
                   {isOpen && (
-
                     <div className="border-t border-white/10 p-5 bg-black/10">
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                        {/* PHONE */}
                         <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
-
                           <div className="flex items-center gap-3">
-
                             <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
                               <Phone className="w-5 h-5 text-cyan-400" />
                             </div>
-
                             <div>
-
-                              <p className="text-xs text-white/40">
-                                Phone Number
-                              </p>
-
-                              <h3 className="font-semibold text-white">
-                                {item.phone}
-                              </h3>
-
+                              <p className="text-xs text-white/40">Phone Number</p>
+                              <h3 className="font-semibold text-white">{item.phone}</h3>
                             </div>
-
                           </div>
-
                         </div>
 
-                        {/* EMAIL */}
                         <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4">
-
                           <div className="flex items-center gap-3">
-
                             <div className="w-11 h-11 rounded-2xl bg-purple-500/10 flex items-center justify-center">
                               <Mail className="w-5 h-5 text-purple-400" />
                             </div>
-
                             <div>
-
-                              <p className="text-xs text-white/40">
-                                Email Address
-                              </p>
-
-                              <h3 className="font-semibold text-white break-all">
-                                {item.email}
-                              </h3>
-
+                              <p className="text-xs text-white/40">Email Address</p>
+                              <h3 className="font-semibold text-white break-all">{item.email}</h3>
                             </div>
-
                           </div>
-
                         </div>
 
-                        {/* ADDRESS */}
                         <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 md:col-span-2">
-
                           <div className="flex items-start gap-3">
-
                             <div className="w-11 h-11 rounded-2xl bg-orange-500/10 flex items-center justify-center">
                               <MapPin className="w-5 h-5 text-orange-400" />
                             </div>
-
                             <div>
-
-                              <p className="text-xs text-white/40">
-                                Address
-                              </p>
-
-                              <h3 className="font-semibold text-white">
-                                {item.address}
-                              </h3>
-
+                              <p className="text-xs text-white/40">Address</p>
+                              <h3 className="font-semibold text-white">{item.address}</h3>
                             </div>
-
                           </div>
-
                         </div>
-
                       </div>
-
                     </div>
-
                   )}
-
                 </div>
-
               );
             })
-
           )}
-
         </div>
 
-        {/* PAGINATION */}
+        {/* PAGINATION BUTTONS */}
         {totalPages > 1 && (
-
           <div className="flex justify-center gap-2 pt-6">
-
             <button
-              onClick={() =>
-                setCurrentPage((p) => Math.max(p - 1, 1))
-              }
-              className="px-4 py-2 bg-white/5 rounded-xl"
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              className="px-4 py-2 bg-white/5 rounded-xl hover:bg-white/10 transition"
             >
               Prev
             </button>
 
             {[...Array(totalPages)].map((_, i) => (
-
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`
-                  px-4 py-2 rounded-xl
-                  ${
-                    currentPage === i + 1
-                      ? "bg-cyan-500 text-black"
-                      : "bg-white/5"
-                  }
-                `}
+                className={`px-4 py-2 rounded-xl transition ${
+                  currentPage === i + 1 ? "bg-cyan-500 text-black font-semibold" : "bg-white/5 hover:bg-white/10"
+                }`}
               >
                 {i + 1}
               </button>
-
             ))}
 
             <button
-              onClick={() =>
-                setCurrentPage((p) =>
-                  Math.min(p + 1, totalPages)
-                )
-              }
-              className="px-4 py-2 bg-white/5 rounded-xl"
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              className="px-4 py-2 bg-white/5 rounded-xl hover:bg-white/10 transition"
             >
               Next
             </button>
-
           </div>
-
         )}
-
       </div>
-
     </DashboardLayout>
   );
 }

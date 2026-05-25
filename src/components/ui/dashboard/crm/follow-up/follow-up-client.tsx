@@ -5,10 +5,7 @@ import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { getTender } from "../../../../../lib/crm/follow-ups/view";
 import { handleWhatsappShare } from "../../../../../lib/crm/follow-ups/whatsapp";
-import {
-  formatCurrency,
-  formatDateIndonesia,
-} from "@/lib/helpers/format";
+import { formatCurrency, formatDateIndonesia } from "@/lib/helpers/format";
 
 import {
   ChevronDown,
@@ -20,7 +17,6 @@ import {
 } from "lucide-react";
 
 /* ================= TYPES ================= */
-
 type UnitStatus = "pengajuan" | "approval" | "rejected";
 
 type UnitDetail = {
@@ -55,11 +51,14 @@ type FollowUp = {
   details: UnitDetail[];
 };
 
-export default function FollowUpPage() {
+interface FollowUpClientProps {
+  initialData: FollowUp[];
+}
+
+export default function FollowUpClient({ initialData }: FollowUpClientProps) {
   const [search, setSearch] = useState("");
   const [openRow, setOpenRow] = useState<string | null>(null);
-  const [dataFollowUp, setDataFollowUp] = useState<FollowUp[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataFollowUp, setDataFollowUp] = useState<FollowUp[]>(initialData);
 
   /* ================= SETTINGS ================= */
   const pageSize = 5;
@@ -73,13 +72,10 @@ export default function FollowUpPage() {
     { id: 5, label: "5" },
   ];
 
-  /* ================= FETCH DATA ================= */
-
-  const fetchData = async () => {
+  /* ================= LIVE RE-FETCH (SETELAH WHATSAPP MUTASI) ================= */
+  const refreshData = async () => {
     try {
-      setLoading(true);
       const res = await getTender(1);
-
       if (res?.success && Array.isArray(res.data)) {
         const mapped: FollowUp[] = res.data.map((item: any) => ({
           id: item.id,
@@ -102,18 +98,11 @@ export default function FollowUpPage() {
         setDataFollowUp(mapped);
       }
     } catch (err) {
-      Swal.fire("Error", "Gagal memuat data follow up", "error");
-    } finally {
-      setLoading(false);
+      console.error("Gagal menyegarkan data follow-up:", err);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   /* ================= FILTER & PAGINATION ================= */
-
   const filteredData = dataFollowUp.filter((item) =>
     item.kode.toLowerCase().includes(search.toLowerCase()) ||
     item.customer.toLowerCase().includes(search.toLowerCase())
@@ -122,16 +111,15 @@ export default function FollowUpPage() {
   const totalPages = Math.ceil(filteredData.length / pageSize);
   const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search]);
+  useEffect(() => { 
+    setCurrentPage(1); 
+  }, [search]);
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="p-6 text-white animate-pulse">Memuat data follow up...</div>
-      </DashboardLayout>
-    );
-  }
-  
+  const onWhatsappShareClick = async (item: FollowUp, stageLabel: string) => {
+    await handleWhatsappShare(item, stageLabel);
+    await refreshData();
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 text-white space-y-6">
@@ -160,7 +148,7 @@ export default function FollowUpPage() {
           </div>
         </div>
 
-        {/* LIST */}
+        {/* LIST CONTAINER */}
         <div className="space-y-4">
           {paginatedData.length === 0 ? (
             <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 text-white/40">
@@ -206,7 +194,7 @@ export default function FollowUpPage() {
                             <button
                               key={step.id}
                               disabled={isCompleted}
-                              onClick={() => handleWhatsappShare(item, step.label)}
+                              onClick={() => onWhatsappShareClick(item, step.label)}
                               className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center transition group active:scale-95 ${
                                 isCompleted
                                   ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 opacity-60 cursor-not-allowed"
@@ -249,7 +237,7 @@ export default function FollowUpPage() {
                     </div>
                   </div>
 
-                  {/* TABLE DETAILS */}
+                  {/* TABLE DETAILS ACCORDION */}
                   {isOpen && (
                     <div className="p-5 border-t border-white/10 bg-black/20 overflow-x-auto">
                       <table className="w-full text-sm">
@@ -300,7 +288,7 @@ export default function FollowUpPage() {
           )}
         </div>
 
-        {/* PAGINATION */}
+        {/* PAGINATION PANEL */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 pt-6">
             <button
