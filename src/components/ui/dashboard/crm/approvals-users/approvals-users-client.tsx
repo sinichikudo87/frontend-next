@@ -9,7 +9,7 @@ import FormApprovalMarketing from "@/components/forms/crm/internal-users/Approva
  
 function ApprovalContent() {
   const searchParams = useSearchParams();
-  const type = searchParams.get("type") || "keuangan";
+  const type = searchParams.get("type") || "keuangan"; 
 
   return (
     <div className="w-full">

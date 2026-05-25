@@ -2,7 +2,7 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AddData from "@/components/modals/kpi/job-desk-entry/AddNewModal";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Swal from "sweetalert2";
 
 import { getJobDeskEntry } from "../../../../../lib/kpi/jobDeskEntry/view";
@@ -10,15 +10,14 @@ import { getJobDeskEntry } from "../../../../../lib/kpi/jobDeskEntry/view";
 import {
   Search,
   Briefcase,
-  ArrowRight,
   ClipboardList,
   User,
   Users,
   Edit,
+  Award
 } from "lucide-react";
 
 /* ================= TYPES ================= */
-
 type DailyProgressLog = {
   entry_id: number;
   date: string;
@@ -46,34 +45,29 @@ type JobDeskKPI = {
   daily_logs: DailyProgressLog[];
 };
 
-export default function JobDeskEntryClient() {
+interface JobDeskEntryClientProps {
+  initialData: JobDeskKPI[];
+}
+
+export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientProps) {
   const [search, setSearch] = useState("");
-  const [jobDesks, setJobDesks] = useState<JobDeskKPI[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  /* ================= STATE CHECKLIST RECORD ================= */
+  const [jobDesks, setJobDesks] = useState<JobDeskKPI[]>(initialData ?? []);
   const [selectedRecords, setSelectedRecords] = useState<number[]>([]);
-
-  /* ================= STATE CHECKLIST EMPLOYEE GRID ================= */
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-
-  /* ================= STATE MODAL ================= */
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<any | null>(null);
+  const [selectedData, setSelectedData] = useState<JobDeskKPI | null>(null);
 
-  /* ================= PAGINATION ================= */
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  /* ================= DYNAMIC EMPLOYEE GRID DETECTOR ================= */
+  const uniqueEmployees = useMemo(() => {
+    return Array.from(new Set(jobDesks.map(item => item.user_name)));
+  }, [jobDesks]);
 
-  /* ================= FETCH & MAPPING ================= */
-  const fetchData = async () => {
+  /* ================= SILENT RE-FETCH ================= */
+  const refreshData = async () => {
     try {
-      setLoading(true);
       const res = await getJobDeskEntry(1); 
-
       if (res?.success && res.data) {
         const rawItems = Array.isArray(res.data) ? res.data : [res.data];
-
         const mapped: JobDeskKPI[] = rawItems.map((item: any, index: number) => {
           const parsedId = Number(item.user_jobdesk_id);
           const finalId = isNaN(parsedId) || parsedId === 0 ? index + 1 : parsedId;
@@ -116,38 +110,31 @@ export default function JobDeskEntryClient() {
             daily_logs: dailyLogsFromApi
           };
         });
-
         setJobDesks(mapped);
       }
     } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to load daily progress log records.",
-        background: "#0f172a",
-        color: "#fff",
-      });
-    } finally {
-      setLoading(false);
+      console.error("Gagal menyegarkan data master job desk entry:", err);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  /* ================= GET UNIQUE EMPLOYEES FOR GRID ================= */
-  const uniqueEmployees = Array.from(new Set(jobDesks.map(item => item.user_name)));
-
-  /* ================= HANDLER CHECKBOX EMPLOYEE GRID ================= */
   const handleSelectEmployee = (name: string) => {
     setSelectedEmployees((prev) =>
       prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
     );
   };
 
-  /* ================= FILTER ================= */
+  const handleSelectRecord = (id: number) => {
+    setSelectedRecords((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleOpenUpdateModal = (item: JobDeskKPI) => {
+    setSelectedData(item);
+    setIsModalOpen(true);
+  };
+
+  /* ================= FILTER LOGIC ================= */
   const filteredData = jobDesks.filter((item) => {
     const matchesSearch = 
       item.job_title.toLowerCase().includes(search.toLowerCase()) ||
@@ -160,36 +147,15 @@ export default function JobDeskEntryClient() {
     return matchesSearch && matchesEmployeeGrid;
   });
 
-  /* ================= PAGINATION ================= */
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedEmployees]);
-
-  /* ================= HANDLER CHECKBOX ================= */
-  const handleSelectRecord = (id: number) => {
-    setSelectedRecords((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  /* ================= HANDLER ACTION UPDATE ================= */
-  const handleOpenUpdateModal = (item: JobDeskKPI) => {
-    setSelectedData(item);
-    setIsModalOpen(true);
-  };
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="p-6 text-white animate-pulse text-center">
-          Loading Accumulating Job Desk KPI Record...
-        </div>
-      </DashboardLayout>
-    );
-  }
+  /* ================= GROUPING LOGIC (BY JOB TITLE) ================= */
+  const groupedData = filteredData.reduce((groups, item) => {
+    const title = item.job_title;
+    if (!groups[title]) {
+      groups[title] = [];
+    }
+    groups[title].push(item);
+    return groups;
+  }, {} as Record<string, JobDeskKPI[]>);
 
   return (
     <DashboardLayout>
@@ -204,7 +170,7 @@ export default function JobDeskEntryClient() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Job Desk Entry</h1>
               <p className="text-sm text-white/50">
-                Monitor performance accumulation & daily progress records
+                Monitor performance accumulation grouped by structural positions
               </p>
             </div>
           </div>
@@ -215,18 +181,18 @@ export default function JobDeskEntryClient() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search job title, user, or KPI..."
+              placeholder="Search position, user, or KPI..."
               className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-cyan-500/50 transition-colors placeholder:text-white/30 text-sm"
             />
           </div>
         </div>
 
-        {/* ================= EMPLOYEE DATA GRID (ABOVE LIST) ================= */}
+        {/* EMPLOYEE DATA GRID */}
         {uniqueEmployees.length > 0 && (
           <div className="p-5 bg-white/5 rounded-3xl border border-white/10 space-y-4">
             <div className="flex items-center gap-2 text-white/80">
               <Users className="w-4 h-4 text-purple-400" />
-              <h3 className="text-xs font-bold uppercase tracking-wider">Employee Data Grid Selection</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider">Employee Filter Grid</h3>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -262,113 +228,102 @@ export default function JobDeskEntryClient() {
           </div>
         )}
 
-        {/* CONTAINER MAIN LIST */}
-        <div className="space-y-4">
-          {paginatedData.length === 0 ? (
-            <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 text-white/40">
-              No KPI tracker data found
-            </div>
-          ) : (
-            paginatedData.map((item) => {
-              const isChecked = selectedRecords.includes(item.id);
-
-              return (
-                <div
-                  key={item.id}
-                  className={`rounded-3xl border border-white/10 bg-white/5 transition-all ${
-                    isChecked ? "bg-cyan-500/[0.02] border-cyan-500/20" : ""
-                  }`}
-                >
-                  {/* ACCUMULATED MAIN SUMMARY CARD */}
-                  <div className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    
-                    <div className="flex items-start sm:items-center gap-4">
-                      {/* INTERACTIVE CHECKBOX */}
-                      <div className="flex items-center h-14 shrink-0 pl-1">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleSelectRecord(item.id)}
-                          className="w-5 h-5 rounded-lg border-white/20 bg-white/5 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-cyan-500 transition-all"
-                        />
-                      </div>
-
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-400/20 flex items-center justify-center shrink-0">
-                        <Briefcase className="w-6 h-6 text-cyan-400" />
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h2 className="text-lg font-bold text-white">{item.job_title}</h2>
-                        </div>
-                      </div>
+        {/* ================= GROUPED CARD RENDERING ================= */}
+        {Object.keys(groupedData).length === 0 ? (
+          <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 text-white/40">
+            No KPI tracker data found
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(groupedData).map(([jobTitle, items]) => (
+              <div 
+                key={jobTitle} 
+                className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl space-y-4 shadow-sm"
+              >
+                {/* GROUP HEADER: NAMA JABATAN */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                      <Briefcase className="w-5 h-5" />
                     </div>
-
-                    {/* TARGET VS REALIZATION ACCUMULATION */}
-                    <div className="grid grid-cols-2 sm:flex items-center gap-4 sm:gap-6 border-t border-b sm:border-none border-white/5 py-3 sm:py-0">
-                      <div className="text-left sm:text-right">
-                        <p className="text-[11px] text-white/40 uppercase tracking-wider">Target Blueprint</p>
-                        <p className="text-sm font-semibold text-white/90">{item.target_value}</p>
-                      </div>
-                      <div className="hidden sm:block text-white/20">
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-white/40 uppercase tracking-wider">Total Accumulated</p>
-                        <p className="text-sm font-bold text-cyan-400">{item.accumulated_actual_value}</p>
-                      </div>
+                    <div>
+                      <h2 className="text-lg font-extrabold tracking-tight text-white">{jobTitle}</h2>
+                      <p className="text-xs text-white/40">
+                        Total {items.length} KPI Indicator{items.length > 1 ? 's' : ''} under this position
+                      </p>
                     </div>
-
-                    {/* ACTION REGION: SCORE & UPDATE BUTTON */}
-                    <div className="flex items-center justify-between sm:justify-end gap-6">
-                      <div className="text-left lg:text-right">
-                        <p className="text-[10px] text-white/40 uppercase">Final Score</p>
-                        <p className="text-lg font-extrabold text-emerald-400">{item.final_score}</p>
-                      </div>
-
-                      {/* BUTTON UPDATE TO SHOW MODAL */}
-                      <button
-                        onClick={() => handleOpenUpdateModal(item)}
-                        className="flex items-center gap-2 h-11 px-4 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/10 transition-all group text-sm font-medium text-white/80 hover:text-cyan-400 shadow-sm"
-                      >
-                        <Edit className="w-4 h-4 text-white/40 group-hover:text-cyan-400 transition-colors" />
-                        <span>Update</span>
-                      </button>
-                    </div>
-
                   </div>
                 </div>
-              );
-            })
-          )}
-        </div>
 
-        {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 pt-4">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              className="px-4 py-2 bg-white/5 rounded-xl hover:bg-white/10 transition text-sm"
-            >
-              Prev
-            </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-4 py-2 rounded-xl transition text-sm ${
-                  currentPage === i + 1 ? "bg-cyan-500 text-black font-bold" : "bg-white/5 hover:bg-white/10"
-                }`}
-              >
-                {i + 1}
-              </button>
+                {/* SUB-GRID: DAFTAR KPI DARI JABATAN */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {items.map((item) => {
+                    const isChecked = selectedRecords.includes(item.id);
+                    return (
+                      <div
+                        key={item.id}
+                        className={`rounded-2xl border border-white/5 bg-white/5 hover:border-white/10 transition-all duration-300 flex flex-col justify-between overflow-hidden relative ${
+                          isChecked ? "bg-cyan-500/[0.01] border-cyan-500/30 ring-1 ring-cyan-500/10" : ""
+                        }`}
+                      >
+                        {/* CARD SUB-HEADER: EMPLOYEE NAME & CHECKBOX */}
+                        <div className="p-4 pb-2 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 truncate">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => handleSelectRecord(item.id)}
+                              className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-0 cursor-pointer accent-cyan-500 shrink-0"
+                            />
+                            <div className="flex items-center gap-1.5 truncate">
+                              <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                              <span className="text-xs font-bold text-white/90 truncate">{item.user_name}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* KPI CONTENT */}
+                        <div className="px-4 py-2">
+                          <div className="p-3 rounded-xl bg-black/20 border border-white/[0.02] min-h-[64px] flex flex-col justify-center">
+                            <p className="text-[9px] text-white/30 uppercase tracking-wider font-semibold mb-0.5">KPI Objective</p>
+                            <p className="text-xs text-white/80 line-clamp-2 leading-relaxed">{item.kpi_name}</p>
+                          </div>
+                        </div>
+
+                        {/* METRICS (TARGET VS ACCUMULATED) */}
+                        <div className="px-4 py-2.5 grid grid-cols-2 gap-3 bg-black/10 border-t border-b border-white/[0.03]">
+                          <div>
+                            <span className="text-[9px] text-white/40 block uppercase tracking-wider">Target</span>
+                            <p className="text-xs font-semibold text-white/90 truncate mt-0.5">{item.target_value}</p>
+                          </div>
+                          <div className="border-l border-white/5 pl-3">
+                            <span className="text-[9px] text-white/40 block uppercase tracking-wider">Actual Acc.</span>
+                            <p className="text-xs font-bold text-cyan-400 truncate mt-0.5">{item.accumulated_actual_value}</p>
+                          </div>
+                        </div>
+
+                        {/* FOOTER ACTION */}
+                        <div className="p-4 pt-2 flex items-center justify-between bg-white/[0.005]">
+                          <div className="flex items-center gap-1.5">
+                            <Award className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-xs font-extrabold text-emerald-400">{item.final_score}</span>
+                          </div>
+
+                          <button
+                            onClick={() => handleOpenUpdateModal(item)}
+                            className="flex items-center gap-1 h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/10 transition-all text-[11px] font-medium text-white/80 hover:text-cyan-400"
+                          >
+                            <Edit className="w-3 h-3 text-white/40" />
+                            <span>Update</span>
+                          </button>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              className="px-4 py-2 bg-white/5 rounded-xl hover:bg-white/10 transition text-sm"
-            >
-              Next
-            </button>
           </div>
         )}
 
@@ -380,10 +335,9 @@ export default function JobDeskEntryClient() {
           setIsModalOpen(false);
           setSelectedData(null);
         }} 
-        onSaveSuccess={fetchData} 
+        onSaveSuccess={refreshData} 
         data={selectedData}       
       />
-
     </DashboardLayout>
   );
 }
