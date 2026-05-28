@@ -1,343 +1,438 @@
 "use client";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import AddData from "@/components/modals/kpi/job-desk-entry/AddNewModal";
 import React, { useEffect, useState, useMemo } from "react";
 import Swal from "sweetalert2";
 
 import { getJobDeskEntry } from "../../../../../lib/kpi/jobDeskEntry/view";
+import { saveJobDeskEntry } from "../../../../../store/kpi/jobDeskEntry/save";
 
-import {
-  Search,
-  Briefcase,
-  ClipboardList,
-  User,
-  Users,
-  Edit,
-  Award
-} from "lucide-react";
+import { Briefcase, ClipboardList, CheckSquare, Square } from "lucide-react";
 
 /* ================= TYPES ================= */
-type DailyProgressLog = {
-  entry_id: number;
-  date: string;
-  actual_value_submitted: string;
-  score_impact: number;
-  notes: string;
-  attachment_url?: string;
+type UserData = {
+  id: number;
+  company_id: number;
+  division_id: number;
+  name: string;
+  email: string;
+  telepon: string;
+  is_active: number;
 };
 
 type JobDeskKPI = {
   id: number;
   company_id: number;
-  user_id: number;
-  user_name: string;
-  jobdesk_master_id: number;
   job_title: string;
+  department: string;
   kpi_name: string;
+  target_indicator: string;
   weight: number;
-  target_value: string;
-  accumulated_actual_value: string;
-  final_score: number;
-  period_month: number;
-  period_year: number;
-  status: string;
-  daily_logs: DailyProgressLog[];
+  is_active: number;
+  created_at: string;
 };
 
-interface JobDeskEntryClientProps {
-  initialData: JobDeskKPI[];
-}
-
-export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientProps) {
+export default function JobDeskEntryClient() {
   const [search, setSearch] = useState("");
-  const [jobDesks, setJobDesks] = useState<JobDeskKPI[]>(initialData ?? []);
+  const [jobDesks, setJobDesks] = useState<JobDeskKPI[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+
   const [selectedRecords, setSelectedRecords] = useState<number[]>([]);
-  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<JobDeskKPI | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]); 
+  const [isSaving, setIsSaving] = useState(false);
 
-  /* ================= DYNAMIC EMPLOYEE GRID DETECTOR ================= */
-  const uniqueEmployees = useMemo(() => {
-    return Array.from(new Set(jobDesks.map(item => item.user_name)));
-  }, [jobDesks]);
-
-  /* ================= SILENT RE-FETCH ================= */
+  /* ================= LOAD DATA ================= */
   const refreshData = async () => {
     try {
-      const res = await getJobDeskEntry(1); 
-      if (res?.success && res.data) {
-        const rawItems = Array.isArray(res.data) ? res.data : [res.data];
-        const mapped: JobDeskKPI[] = rawItems.map((item: any, index: number) => {
-          const parsedId = Number(item.user_jobdesk_id);
-          const finalId = isNaN(parsedId) || parsedId === 0 ? index + 1 : parsedId;
+      const res: any = await getJobDeskEntry(1); 
+      if (!res?.success || !res.data) return;
 
-          const dailyLogsFromApi: DailyProgressLog[] = Array.isArray(item.daily_logs) 
-            ? item.daily_logs.map((log: any) => ({
-                entry_id: Number(log.entry_id ?? 0),
-                date: log.date ?? "2026-05-20",
-                actual_value_submitted: log.actual_value_submitted ?? item.actual_value ?? "-",
-                score_impact: Number(log.score_impact ?? item.score ?? 0),
-                notes: log.notes ?? item.notes ?? "-",
-                attachment_url: log.attachment_url || undefined
-              }))
-            : [
-                {
-                  entry_id: finalId * 100 + 1,
-                  date: "2026-05-19",
-                  actual_value_submitted: item.actual_value ?? "-",
-                  score_impact: Number(item.score ?? 0),
-                  notes: item.notes && item.notes !== "-" ? item.notes : "Regular progress log entry.",
-                  attachment_url: "#"
-                }
-              ];
+      const rawJobDesks = res.data.job_desks ?? [];
+      const rawUsers = res.data.users ?? [];
 
-          return {
-            id: finalId,
-            company_id: Number(item.company_id ?? 0),
-            user_id: Number(item.user_id ?? 0),
-            user_name: item.user_name ?? "-",
-            jobdesk_master_id: Number(item.jobdesk_master_id ?? 0),
-            job_title: item.job_title ?? "-",
-            kpi_name: item.kpi_name ?? "-",
-            weight: Number(item.weight ?? 0),
-            target_value: item.target_value ?? "-",
-            accumulated_actual_value: item.actual_value ?? "-",
-            final_score: Number(item.score ?? 0),
-            period_month: Number(item.period_month ?? 0),
-            period_year: Number(item.period_year ?? 0),
-            status: item.status ?? "PENDING",
-            daily_logs: dailyLogsFromApi
-          };
-        });
-        setJobDesks(mapped);
-      }
+      /* ================= MAP KPI ================= */
+      const mappedKpi: JobDeskKPI[] = rawJobDesks.map((item: any) => ({
+        id: Number(item.id ?? 0),
+        company_id: Number(item.company_id ?? 1),
+        job_title: item.job_title ?? "-",
+        department: item.department ?? "-",
+        kpi_name: item.kpi_name ?? "-",
+        target_indicator: item.target_indicator ?? "-",
+        weight: Number(item.weight ?? 0),
+        is_active: Number(item.is_active ?? 0),
+        created_at: item.created_at ?? "-"
+      }));
+
+      /* ================= MAP USERS ================= */
+      const mappedUsers: UserData[] = rawUsers.map((user: any) => ({
+        id: Number(user.id),
+        company_id: Number(user.company_id),
+        division_id: Number(user.division_id),
+        name: user.name ?? "-",
+        email: user.email ?? "-",
+        telepon: user.telepon ?? "-",
+        is_active: Number(user.is_active)
+      }));
+
+      setJobDesks(mappedKpi);
+      setUsers(mappedUsers);
     } catch (err) {
-      console.error("Gagal menyegarkan data master job desk entry:", err);
+      console.error("refresh error:", err);
     }
   };
 
-  const handleSelectEmployee = (name: string) => {
-    setSelectedEmployees((prev) =>
-      prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
-    );
-  };
+  useEffect(() => {
+    refreshData();
+  }, []);
 
+  /* ================= HANDLERS ================= */
   const handleSelectRecord = (id: number) => {
     setSelectedRecords((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  const handleOpenUpdateModal = (item: JobDeskKPI) => {
-    setSelectedData(item);
-    setIsModalOpen(true);
+  const handleSelectUser = (id: number) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
-  /* ================= FILTER LOGIC ================= */
-  const filteredData = jobDesks.filter((item) => {
-    const matchesSearch = 
-      item.job_title.toLowerCase().includes(search.toLowerCase()) ||
-      item.user_name.toLowerCase().includes(search.toLowerCase()) ||
-      item.kpi_name.toLowerCase().includes(search.toLowerCase());
-
-    const matchesEmployeeGrid = 
-      selectedEmployees.length === 0 || selectedEmployees.includes(item.user_name);
-
-    return matchesSearch && matchesEmployeeGrid;
-  });
-
-  /* ================= GROUPING LOGIC (BY JOB TITLE) ================= */
-  const groupedData = filteredData.reduce((groups, item) => {
-    const title = item.job_title;
-    if (!groups[title]) {
-      groups[title] = [];
+  /* ================= BATCH SAVE ================= */
+  const handleBatchSave = async () => {
+    if (selectedRecords.length === 0) return;
+    
+    if (selectedUserIds.length === 0) {
+      Swal.fire("Peringatan", "Pilih/centang minimal satu karyawan terlebih dahulu!", "warning");
+      return;
     }
-    groups[title].push(item);
-    return groups;
-  }, {} as Record<string, JobDeskKPI[]>);
+
+    setIsSaving(true);
+    try {
+      const selectedItems = jobDesks.filter((d) => selectedRecords.includes(d.id));
+      
+      const primaryTargetUserId = selectedUserIds[0];
+      const targetUser = users.find((u) => u.id === primaryTargetUserId);
+
+      const logs = selectedItems.map((item) => ({
+        company_id: item.company_id,
+        user_id: primaryTargetUserId, 
+        jobdesk_master_id: item.id,
+        target_value: item.target_indicator,
+        period_month: new Date().getMonth() + 1,
+        period_year: new Date().getFullYear(),
+        date: new Date().toISOString().split("T")[0],
+        actual_value_submitted: item.weight.toString(),
+        score_impact: item.weight,
+        notes: `Batch save untuk karyawan: ${targetUser ? targetUser.name : "Unknown"}`,
+        attachment_url: ""
+      }));
+
+      const res = await saveJobDeskEntry({ logs });
+
+      if (res.success) {
+        await refreshData();
+        setSelectedRecords([]);
+        setSelectedUserIds([]); 
+        Swal.fire("Success", "Data progress log berhasil disimpan!", "success");
+      } else {
+        Swal.fire("Error", res.message || "Gagal menyimpan log", "error");
+      }
+    } catch (error: any) {
+      Swal.fire("Error", error.message || "Terjadi kesalahan API", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  /* ================= FILTER & GROUPING ================= */
+  const filteredJobDesks = useMemo(() => {
+    return jobDesks.filter((item) => {
+      return (
+        item.job_title.toLowerCase().includes(search.toLowerCase()) ||
+        item.kpi_name.toLowerCase().includes(search.toLowerCase()) ||
+        item.department.toLowerCase().includes(search.toLowerCase())
+      );
+    });
+  }, [jobDesks, search]);
+
+  const groupedData = useMemo(() => {
+    return filteredJobDesks.reduce((acc, item) => {
+      if (!acc[item.job_title]) acc[item.job_title] = [];
+      acc[item.job_title].push(item);
+      return acc;
+    }, {} as Record<string, JobDeskKPI[]>);
+  }, [filteredJobDesks]);
 
   return (
     <DashboardLayout>
-      <div className="p-4 md:p-6 text-white space-y-6">
+      <div className="p-4 space-y-6 text-white">
         
-        {/* DASHBOARD TOP HEADER */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <ClipboardList className="w-6 h-6 text-white" />
+        {/* HEADER */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 md:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between relative z-10">
+            
+            {/* LEFT */}
+            <div className="flex items-start sm:items-center gap-4">
+              <div className="relative shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/40">
+                <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                <div className="absolute inset-0 bg-white/20 blur-sm rounded-2xl"></div>
+              </div>
+
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white break-words">
+                  Work Progress Update
+                </h1>
+
+                <p className="text-purple-200/60 text-xs sm:text-sm font-medium mt-1">
+                  Total Job Desk Terfilter: {filteredJobDesks.length}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Job Desk Entry</h1>
-              <p className="text-sm text-white/50">
-                Monitor performance accumulation grouped by structural positions
-              </p>
+
+            {/* RIGHT */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+              
+              {/* SEARCH */}
+              <div className="relative group w-full sm:w-72">
+                <input
+                  className="pl-4 pr-4 py-3 w-full rounded-xl bg-white/10 border border-white/10 outline-none focus:ring-2 focus:ring-cyan-500/50 text-sm transition-all placeholder:text-gray-500"
+                  placeholder="Search job desk..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              {/* SAVE BUTTON */}
+              {selectedRecords.length > 0 && (
+                <button
+                  onClick={handleBatchSave}
+                  disabled={isSaving}
+                  className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-xl transition-all font-bold text-sm shadow-lg shadow-cyan-500/20 active:scale-95"
+                >
+                  {isSaving
+                    ? "Saving..."
+                    : `Save (${selectedRecords.length})`}
+                </button>
+              )}
             </div>
           </div>
 
-          {/* SEARCH BAR */}
-          <div className="relative w-full sm:w-[300px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search position, user, or KPI..."
-              className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-cyan-500/50 transition-colors placeholder:text-white/30 text-sm"
-            />
+          {/* BACKGROUND EFFECT */}
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        </div>
+
+        {/* USER SECTION */}
+        <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-sm font-semibold text-gray-400">
+              Pilih Karyawan Target:
+            </p>
+
+            <p className="text-xs text-gray-500">
+              Selected: {selectedUserIds.length}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+            {users.map((user) => {
+              const isChecked = selectedUserIds.includes(user.id);
+
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => handleSelectUser(user.id)}
+                  className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border select-none transition-all duration-150 w-full min-w-0 text-left ${
+                    isChecked
+                      ? "bg-purple-600/30 border-purple-500 text-purple-200 font-medium shadow-md shadow-purple-500/10 scale-[1.01]"
+                      : "bg-white/5 border-white/5 hover:bg-white/10 text-gray-300 hover:border-white/20"
+                  }`}
+                >
+                  {isChecked ? (
+                    <CheckSquare className="w-4 h-4 text-purple-400 shrink-0" />
+                  ) : (
+                    <Square className="w-4 h-4 text-gray-500 shrink-0" />
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="text-sm truncate"
+                      title={user.name}
+                    >
+                      {user.name}
+                    </p>
+
+                    <p className="text-[11px] text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* EMPLOYEE DATA GRID */}
-        {uniqueEmployees.length > 0 && (
-          <div className="p-5 bg-white/5 rounded-3xl border border-white/10 space-y-4">
-            <div className="flex items-center gap-2 text-white/80">
-              <Users className="w-4 h-4 text-purple-400" />
-              <h3 className="text-xs font-bold uppercase tracking-wider">Employee Filter Grid</h3>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {uniqueEmployees.map((empName, index) => {
-                const isEmpChecked = selectedEmployees.includes(empName);
-                return (
-                  <div
-                    key={index}
-                    onClick={() => handleSelectEmployee(empName)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 select-none ${
-                      isEmpChecked 
-                        ? "bg-purple-500/10 border-purple-500/40 shadow-md shadow-purple-500/5" 
-                        : "bg-white/[0.02] border-white/5 hover:border-white/10"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isEmpChecked}
-                      onChange={() => {}} 
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-0 cursor-pointer accent-purple-500 transition-all shrink-0"
-                    />
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4 text-purple-400" />
-                    </div>
-                    <div className="truncate">
-                      <p className="text-xs font-bold text-white truncate">{empName}</p>
-                      <p className="text-[10px] text-white/40">Employee</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ================= GROUPED CARD RENDERING ================= */}
+        {/* JOB DESK SECTION */}
         {Object.keys(groupedData).length === 0 ? (
-          <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 text-white/40">
-            No KPI tracker data found
+          <div className="text-center py-10 text-gray-500 text-sm bg-white/5 rounded-xl border border-white/10">
+            Data job desk tidak ditemukan.
           </div>
         ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedData).map(([jobTitle, items]) => (
-              <div 
-                key={jobTitle} 
-                className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl space-y-4 shadow-sm"
-              >
-                {/* GROUP HEADER: NAMA JABATAN */}
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                      <Briefcase className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-extrabold tracking-tight text-white">{jobTitle}</h2>
-                      <p className="text-xs text-white/40">
-                        Total {items.length} KPI Indicator{items.length > 1 ? 's' : ''} under this position
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          Object.entries(groupedData).map(([title, items]) => (
+            <div key={title} className="space-y-3">
+              
+              {/* TITLE */}
+              <div className="flex items-center gap-2 mt-6 border-b border-white/5 pb-2">
+                <Briefcase className="w-5 h-5 text-cyan-400 shrink-0" />
 
-                {/* SUB-GRID: DAFTAR KPI DARI JABATAN */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {items.map((item) => {
-                    const isChecked = selectedRecords.includes(item.id);
-                    return (
+                <h2 className="font-bold text-base sm:text-lg text-white break-words">
+                  {title}
+                </h2>
+              </div>
+
+              {/* GRID */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {items.map((item) => {
+                  const checked = selectedRecords.includes(item.id);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-xl transition-all flex flex-col justify-between border ${
+                        checked
+                          ? "bg-cyan-500/10 border-cyan-500/30"
+                          : "bg-white/5 border-white/10 hover:border-white/20"
+                      }`}
+                    >
+                      <div>
+                        <label className="flex items-start gap-3 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            className="mt-1 rounded accent-cyan-500 cursor-pointer w-4 h-4 shrink-0"
+                            checked={checked}
+                            onChange={() => handleSelectRecord(item.id)}
+                          />
+
+                          <div className="min-w-0">
+                            <p className="font-medium text-cyan-300 text-sm sm:text-base break-words">
+                              {item.department}
+                            </p>
+
+                            <p className="text-sm mt-2 text-gray-300 font-semibold break-words">
+                              {item.kpi_name}
+                            </p>
+                          </div>
+                        </label>
+
+                        <div className="mt-3 space-y-1">
+                          <p className="text-xs text-gray-400 break-words">
+                            Target: {item.target_indicator}
+                          </p>
+
+                          <p className="text-xs text-gray-400">
+                            Weight: {item.weight}%
+                          </p>
+                        </div>
+                      </div>
+
                       <div
-                        key={item.id}
-                        className={`rounded-2xl border border-white/5 bg-white/5 hover:border-white/10 transition-all duration-300 flex flex-col justify-between overflow-hidden relative ${
-                          isChecked ? "bg-cyan-500/[0.01] border-cyan-500/30 ring-1 ring-cyan-500/10" : ""
+                        className={`text-xs mt-4 font-bold ${
+                          item.is_active
+                            ? "text-emerald-400"
+                            : "text-red-400"
                         }`}
                       >
-                        {/* CARD SUB-HEADER: EMPLOYEE NAME & CHECKBOX */}
-                        <div className="p-4 pb-2 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2.5 truncate">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => handleSelectRecord(item.id)}
-                              className="w-4 h-4 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-0 cursor-pointer accent-cyan-500 shrink-0"
-                            />
-                            <div className="flex items-center gap-1.5 truncate">
-                              <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                              <span className="text-xs font-bold text-white/90 truncate">{item.user_name}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* KPI CONTENT */}
-                        <div className="px-4 py-2">
-                          <div className="p-3 rounded-xl bg-black/20 border border-white/[0.02] min-h-[64px] flex flex-col justify-center">
-                            <p className="text-[9px] text-white/30 uppercase tracking-wider font-semibold mb-0.5">KPI Objective</p>
-                            <p className="text-xs text-white/80 line-clamp-2 leading-relaxed">{item.kpi_name}</p>
-                          </div>
-                        </div>
-
-                        {/* METRICS (TARGET VS ACCUMULATED) */}
-                        <div className="px-4 py-2.5 grid grid-cols-2 gap-3 bg-black/10 border-t border-b border-white/[0.03]">
-                          <div>
-                            <span className="text-[9px] text-white/40 block uppercase tracking-wider">Target</span>
-                            <p className="text-xs font-semibold text-white/90 truncate mt-0.5">{item.target_value}</p>
-                          </div>
-                          <div className="border-l border-white/5 pl-3">
-                            <span className="text-[9px] text-white/40 block uppercase tracking-wider">Actual Acc.</span>
-                            <p className="text-xs font-bold text-cyan-400 truncate mt-0.5">{item.accumulated_actual_value}</p>
-                          </div>
-                        </div>
-
-                        {/* FOOTER ACTION */}
-                        <div className="p-4 pt-2 flex items-center justify-between bg-white/[0.005]">
-                          <div className="flex items-center gap-1.5">
-                            <Award className="w-3.5 h-3.5 text-emerald-400" />
-                            <span className="text-xs font-extrabold text-emerald-400">{item.final_score}</span>
-                          </div>
-
-                          <button
-                            onClick={() => handleOpenUpdateModal(item)}
-                            className="flex items-center gap-1 h-8 px-2.5 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/10 transition-all text-[11px] font-medium text-white/80 hover:text-cyan-400"
-                          >
-                            <Edit className="w-3 h-3 text-white/40" />
-                            <span>Update</span>
-                          </button>
-                        </div>
-
+                        Status: {item.is_active ? "ACTIVE" : "NONACTIVE"}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
 
-      </div>
+        {/* SECTION: USER/EMPLOYEE CHECKLIST (GRID FIXED) */}
+        <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+          <p className="text-sm font-semibold text-gray-400">Pilih Karyawan Target:</p>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5">
+            {users.map((user) => {
+              const isChecked = selectedUserIds.includes(user.id);
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => handleSelectUser(user.id)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border select-none transition-all duration-150 w-full min-w-0 text-left ${
+                    isChecked
+                      ? "bg-purple-600/30 border-purple-500 text-purple-200 font-medium shadow-md shadow-purple-500/10 scale-[1.01]"
+                      : "bg-white/5 border-white/5 hover:bg-white/10 text-gray-300 hover:border-white/20"
+                  }`}
+                >
+                  {isChecked ? (
+                    <CheckSquare className="w-4 h-4 text-purple-400 shrink-0" />
+                  ) : (
+                    <Square className="w-4 h-4 text-gray-500 shrink-0" />
+                  )}
+                  
+                  <span className="text-sm truncate w-full" title={user.name}>
+                    {user.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-      <AddData 
-        open={isModalOpen} 
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedData(null);
-        }} 
-        onSaveSuccess={refreshData} 
-        data={selectedData}       
-      />
+        {/* CONTENT JOB DESK & KPI */}
+        {Object.keys(groupedData).length === 0 ? (
+          <div className="text-center py-10 text-gray-500 text-sm bg-white/5 rounded-xl border border-white/10">
+            Data job desk tidak ditemukan.
+          </div>
+        ) : (
+          Object.entries(groupedData).map(([title, items]) => (
+            <div key={title} className="space-y-3">
+              <h2 className="font-bold text-lg flex items-center gap-2 mt-6 border-b border-white/5 pb-1">
+                <Briefcase className="w-5 h-5 text-cyan-400" /> {title}
+              </h2>
+
+              <div className="grid md:grid-cols-3 gap-3">
+                {items.map((item) => {
+                  const checked = selectedRecords.includes(item.id);
+
+                  return (
+                    <div key={item.id} className="p-4 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 transition-all flex flex-col justify-between">
+                      <div>
+                        <label className="flex items-center gap-2 font-medium text-cyan-300 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            className="rounded accent-cyan-500 cursor-pointer w-4 h-4"
+                            checked={checked}
+                            onChange={() => handleSelectRecord(item.id)}
+                          />
+                          {item.department}
+                        </label>
+
+                        <p className="text-sm mt-2 text-gray-300 font-semibold">{item.kpi_name}</p>
+                        <p className="text-xs text-gray-400 mt-1">Target: {item.target_indicator}</p>
+                        <p className="text-xs text-gray-400">Weight: {item.weight}%</p>
+                      </div>
+                      
+                      <div className="text-xs mt-3 font-bold text-emerald-400">
+                        Status: {item.is_active ? "ACTIVE" : "NONACTIVE"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+        
+      </div>
     </DashboardLayout>
   );
 }

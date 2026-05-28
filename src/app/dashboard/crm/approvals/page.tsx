@@ -4,6 +4,7 @@ import { getApproval } from "../../../../lib/crm/approvals/view";
 export const dynamic = "force-dynamic";
 
 /* ================= TYPES ================= */
+
 type UnitDetail = {
   kategori: string;
   qty: number;
@@ -44,7 +45,7 @@ export default async function Page() {
       }));
     }
   } catch (err) {
-    console.error("Gagal memuat data approval di server (SSR):", err);
+    console.error("Gagal memuat data approval di server:", err);
   }
 
   return <FormApprovals initialData={initialApprovals} />;

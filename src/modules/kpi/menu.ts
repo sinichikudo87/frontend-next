@@ -11,58 +11,73 @@ import {
   FileText,
 } from "lucide-react";
 
-const kpiMenu: MenuItem[] = [
+const kpiMenu: any[] = [
+  
   {
-    name: "KPI Dashboard",
-    icon: LayoutDashboard,
-    href: "/dashboard/kpi",
-  },
-  {
-    name: "Employee KPI",
-    icon: Users,
-    href: "/dashboard/kpi/employees",
-  },
-  {
-    name: "Performance Analytics",
-    icon: BarChart3,
-    href: "/dashboard/kpi/analytics",
-  },
-  {
-    name: "Targets & Goals",
-    icon: TrendingUp,
-    href: "/dashboard/kpi/goals",
+    title: "Overview",
+    items: [
+      {
+        name: "KPI Dashboard",
+        icon: LayoutDashboard,
+        href: "/dashboard/kpi",
+      },
+    ],
   },
 
-  // MASTER
+  // GROUP MASTER
   {
-    name: "Job Desk Master",
-    icon: Briefcase,
-    href: "/dashboard/kpi/job-desk-master",
+    title: "Master Data",
+    items: [
+      {
+        name: "Employee KPI",
+        icon: Users,
+        href: "/dashboard/kpi/employees",
+      },
+      {
+        name: "Job Desk Master",
+        icon: Briefcase,
+        href: "/dashboard/kpi/job-desk-master",
+      },
+    ],
   },
 
-  // TRANSACTIONS
+  // GROUP TRANSACTIONS
   {
-    name: "Job Desk Entry",
-    icon: ClipboardList,
-    href: "/dashboard/kpi/job-desk-entry",
-  },
-  {
-    name: "Work Progress Update",
-    icon: RefreshCcw,
-    href: "/dashboard/kpi/work-progress-update",
+    title: "Transactions",
+    items: [
+      {
+        name: "Targets & Goals",
+        icon: TrendingUp,
+        href: "/dashboard/kpi/goals",
+      },
+      {
+        name: "Job Desk Entry",
+        icon: ClipboardList,
+        href: "/dashboard/kpi/job-desk-entry",
+      },
+      {
+        name: "Work Progress Update",
+        icon: RefreshCcw,
+        href: "/dashboard/kpi/work-progress-update",
+      },
+    ],
   },
 
-  // REPORTING
+  // GROUP REPORTING & SETTINGS
   {
-    name: "Reports",
-    icon: FileText,
-    href: "/dashboard/kpi/reports",
-  },
-
-  {
-    name: "KPI Settings",
-    icon: Settings,
-    href: "/dashboard/kpi/settings",
+    title: "Reports & Configurations",
+    items: [
+      {
+        name: "Reports",
+        icon: FileText,
+        href: "/dashboard/kpi/reporting", 
+      },
+      {
+        name: "KPI Settings",
+        icon: Settings,
+        href: "/dashboard/kpi/settings",
+      },
+    ],
   },
 ];
 

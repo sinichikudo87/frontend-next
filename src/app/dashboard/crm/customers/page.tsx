@@ -1,7 +1,6 @@
 import FormCustomers from "@/components/ui/dashboard/crm/customers/customers-client";
 import { getCustomer } from "../../../../lib/crm/customers/view";
 
-// 1. Definisikan atau import tipe Customer yang sama dengan Client Component
 type Customer = {
   id: number;
   name: string;
@@ -14,7 +13,6 @@ type Customer = {
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  // 2. Berikan tipe data secara eksplisit pada array kosongnya
   let initialCustomers: Customer[] = [];
 
   try {
@@ -34,6 +32,5 @@ export default async function Page() {
     console.error("Gagal memuat data di server:", err);
   }
 
-  // Sekarang TypeScript dijamin aman dan tidak akan error saat data dilempar ke sini
   return <FormCustomers initialData={initialCustomers} />;
 }

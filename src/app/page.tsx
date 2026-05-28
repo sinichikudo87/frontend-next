@@ -53,7 +53,7 @@ export default function PortalPage() {
     {
       name: "System Settings",
       description: "Configure core system preferences.",
-      href: "/dashboard/settings/system",
+      href: "/dashboard/system-settings",
       gradient: "from-slate-600 to-slate-400",
       icon: "⚙️",
     },

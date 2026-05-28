@@ -2,10 +2,17 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import DocumentationModal from "@/components/modals/crm/approval/DocumentationModal";
-import React, { Fragment, useEffect, useState } from "react";
+
+import React, {
+  Fragment,
+  useEffect,
+  useState,
+} from "react";
+
 import Swal from "sweetalert2";
 
-import { getApproval } from "../../../../../lib/crm/approvals/view";
+import { getApproval } from "@/lib/crm/approvals/view";
+
 import { handleWhatsappShare } from "@/lib/crm/approvals/whatsapp";
 
 import {
@@ -38,21 +45,37 @@ export type Approval = {
   details: UnitDetail[];
 };
 
-export default function ApprovalPage() {
+type Props = {
+  initialData: Approval[];
+};
+
+export default function FormApprovals({
+  initialData,
+}: Props) {
   const [search, setSearch] = useState("");
-  const [openRow, setOpenRow] = useState<number | null>(null);
-  const [dataApproval, setDataApproval] = useState<Approval[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTenderId, setActiveTenderId] = useState<number | null>(null);
+
+  const [openRow, setOpenRow] =
+    useState<number | null>(null);
+
+  const [dataApproval, setDataApproval] =
+    useState<Approval[]>(initialData);
+
+  const [loading, setLoading] = useState(false);
+
+  const [activeTenderId, setActiveTenderId] =
+    useState<number | null>(null);
+
   const [openDocumentationModal, setOpenDocumentationModal] =
     useState(false);
 
   /* ================= PAGINATION ================= */
 
   const pageSize = 5;
-  const [currentPage, setCurrentPage] = useState(1);
 
-  /* ================= FETCH ================= */
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  /* ================= OPTIONAL REFRESH ================= */
 
   const fetchData = async () => {
     try {
@@ -60,38 +83,59 @@ export default function ApprovalPage() {
 
       const res = await getApproval(1);
 
-      if (res?.success && Array.isArray(res.data)) {
-        const mapped: Approval[] = res.data.map((item: any) => ({
-          id: item.id,
-          kode: item.kode,
-          customer: item.customer_name ?? "-",
-          tanggal: item.tanggal,
-          total: Number(item.total_harga || 0),
-          documentation: "Quotation, NPWP, Company Profile",
-          details: (item.details || []).map((d: any) => ({
-            kategori: d.category_name,
-            qty: Number(d.qty),
-            harga: Number(d.price_per_unit),
-            subtotal: Number(d.subtotal),
-          })),
-        }));
+      if (
+        res?.success &&
+        Array.isArray(res.data)
+      ) {
+        const mapped: Approval[] =
+          res.data.map((item: any) => ({
+            id: item.id,
+            kode: item.kode,
+            customer:
+              item.customer_name ?? "-",
+            tanggal: item.tanggal,
+            total: Number(
+              item.total_harga || 0
+            ),
+            documentation:
+              "Quotation, NPWP, Company Profile",
+            details: (item.details || []).map(
+              (d: any) => ({
+                kategori: d.category_name,
+                qty: Number(d.qty),
+                harga: Number(
+                  d.price_per_unit
+                ),
+                subtotal: Number(
+                  d.subtotal
+                ),
+              })
+            ),
+          }));
 
         setDataApproval(mapped);
       }
     } catch (err) {
-      Swal.fire("Error", "Gagal memuat data approval", "error");
+      Swal.fire(
+        "Error",
+        "Gagal memuat data approval",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // OPTIONAL AUTO REFRESH
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
   /* ================= FORMAT ================= */
 
-  const formatCurrency = (amount: number) =>
+  const formatCurrency = (
+    amount: number
+  ) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
@@ -100,25 +144,36 @@ export default function ApprovalPage() {
       .format(amount)
       .replace("Rp", "Rp ");
 
-  const formatDateIndonesia = (date: string) => {
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(date));
+  const formatDateIndonesia = (
+    date: string
+  ) => {
+    return new Intl.DateTimeFormat(
+      "id-ID",
+      {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }
+    ).format(new Date(date));
   };
 
   /* ================= FILTER ================= */
 
   const filteredData = dataApproval.filter(
     (item) =>
-      item.kode.toLowerCase().includes(search.toLowerCase()) ||
-      item.customer.toLowerCase().includes(search.toLowerCase())
+      item.kode
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      item.customer
+        .toLowerCase()
+        .includes(search.toLowerCase())
   );
 
   /* ================= PAGINATION ================= */
 
-  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const totalPages = Math.ceil(
+    filteredData.length / pageSize
+  );
 
   const paginatedData = filteredData.slice(
     (currentPage - 1) * pageSize,
@@ -183,7 +238,9 @@ export default function ApprovalPage() {
               type="text"
               placeholder="Search approval..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               className="
                 w-full
                 h-12
@@ -222,7 +279,8 @@ export default function ApprovalPage() {
           ) : (
 
             paginatedData.map((item, index) => {
-              const isOpen = openRow === item.id;
+              const isOpen =
+                openRow === item.id;
 
               return (
                 <Fragment key={item.id}>
@@ -233,7 +291,6 @@ export default function ApprovalPage() {
                       border border-white/10
                       bg-white/[0.03]
                       overflow-hidden
-                      transition-all duration-300
                     "
                   >
 
@@ -262,7 +319,11 @@ export default function ApprovalPage() {
                             font-bold
                           "
                         >
-                          #{(currentPage - 1) * pageSize + index + 1}
+                          #
+                          {(currentPage - 1) *
+                            pageSize +
+                            index +
+                            1}
                         </div>
 
                         <div>
@@ -272,7 +333,6 @@ export default function ApprovalPage() {
                               font-bold
                               text-yellow-400
                               text-lg
-                              tracking-wide
                             "
                           >
                             {item.kode}
@@ -291,7 +351,9 @@ export default function ApprovalPage() {
 
                             <div className="flex items-center gap-1">
                               <CalendarDays className="w-4 h-4" />
-                              {formatDateIndonesia(item.tanggal)}
+                              {formatDateIndonesia(
+                                item.tanggal
+                              )}
                             </div>
 
                             <div>
@@ -321,7 +383,9 @@ export default function ApprovalPage() {
                             font-bold
                           "
                         >
-                          {formatCurrency(item.total)}
+                          {formatCurrency(
+                            item.total
+                          )}
                         </div>
 
                         {/* ACTIONS */}
@@ -330,8 +394,13 @@ export default function ApprovalPage() {
                           {/* DOC */}
                           <button
                             onClick={() => {
-                              setActiveTenderId(item.id);
-                              setOpenDocumentationModal(true);
+                              setActiveTenderId(
+                                item.id
+                              );
+
+                              setOpenDocumentationModal(
+                                true
+                              );
                             }}
                             className="
                               h-10
@@ -424,7 +493,11 @@ export default function ApprovalPage() {
                           {/* TOGGLE */}
                           <button
                             onClick={() =>
-                              setOpenRow(isOpen ? null : item.id)
+                              setOpenRow(
+                                isOpen
+                                  ? null
+                                  : item.id
+                              )
                             }
                             className={`
                               w-10 h-10
@@ -441,7 +514,9 @@ export default function ApprovalPage() {
                           >
                             <ChevronDown
                               className={`w-5 h-5 transition-transform duration-300 ${
-                                isOpen ? "rotate-180" : ""
+                                isOpen
+                                  ? "rotate-180"
+                                  : ""
                               }`}
                             />
                           </button>
@@ -452,100 +527,6 @@ export default function ApprovalPage() {
 
                     </div>
 
-                    {/* DETAIL */}
-                    {isOpen && (
-
-                      <div
-                        className="
-                          p-5
-                          border-t border-white/10
-                          bg-black/20
-                          overflow-x-auto
-                        "
-                      >
-
-                        <table className="w-full text-sm">
-
-                          <thead>
-                            <tr
-                              className="
-                                text-left
-                                text-white/40
-                                border-b border-white/10
-                              "
-                            >
-
-                              <th className="pb-3 px-2 font-semibold uppercase tracking-wider">
-                                Category
-                              </th>
-
-                              <th className="pb-3 px-2 text-center font-semibold uppercase tracking-wider">
-                                Qty
-                              </th>
-
-                              <th className="pb-3 px-2 text-right font-semibold uppercase tracking-wider">
-                                Price
-                              </th>
-
-                              <th
-                                className="
-                                  pb-3 px-2
-                                  text-right
-                                  font-semibold
-                                  uppercase
-                                  tracking-wider
-                                  text-yellow-400/80
-                                "
-                              >
-                                Subtotal
-                              </th>
-
-                            </tr>
-                          </thead>
-
-                          <tbody className="divide-y divide-white/5">
-
-                            {item.details.map((d, i) => (
-
-                              <tr
-                                key={i}
-                                className="
-                                  group
-                                  hover:bg-white/[0.02]
-                                  transition
-                                "
-                              >
-
-                                <td className="py-4 px-2 font-medium text-white">
-                                  {d.kategori}
-                                </td>
-
-                                <td className="py-4 px-2 text-center text-white/70">
-                                  {d.qty}
-                                </td>
-
-                                <td className="py-4 px-2 text-right text-white/70">
-                                  {formatCurrency(d.harga)}
-                                </td>
-
-                                <td className="py-4 px-2 text-right">
-                                  <span className="text-yellow-400 font-bold">
-                                    {formatCurrency(d.subtotal)}
-                                  </span>
-                                </td>
-
-                              </tr>
-
-                            ))}
-
-                          </tbody>
-
-                        </table>
-
-                      </div>
-
-                    )}
-
                   </div>
 
                 </Fragment>
@@ -555,74 +536,6 @@ export default function ApprovalPage() {
           )}
 
         </div>
-
-        {/* PAGINATION */}
-        {totalPages > 1 && (
-
-          <div className="flex justify-center gap-2 pt-6">
-
-            <button
-              disabled={currentPage === 1}
-              onClick={() =>
-                setCurrentPage((p) => Math.max(p - 1, 1))
-              }
-              className="
-                px-4 py-2
-                bg-white/5
-                rounded-xl
-                hover:bg-white/10
-                transition
-                disabled:opacity-30
-                disabled:cursor-not-allowed
-              "
-            >
-              Prev
-            </button>
-
-            {[...Array(totalPages)].map((_, i) => (
-
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`
-                  px-4 py-2
-                  rounded-xl
-                  transition
-                  ${
-                    currentPage === i + 1
-                      ? "bg-yellow-500 text-black font-bold"
-                      : "bg-white/5 hover:bg-white/10"
-                  }
-                `}
-              >
-                {i + 1}
-              </button>
-
-            ))}
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() =>
-                setCurrentPage((p) =>
-                  Math.min(p + 1, totalPages)
-                )
-              }
-              className="
-                px-4 py-2
-                bg-white/5
-                rounded-xl
-                hover:bg-white/10
-                transition
-                disabled:opacity-30
-                disabled:cursor-not-allowed
-              "
-            >
-              Next
-            </button>
-
-          </div>
-
-        )}
 
       </div>
 

@@ -19,7 +19,7 @@ export async function getApproval<T = any>(id: number): Promise<ApiResponse<T>> 
     const signature = generateSignature(
         method,
         url,
-        body,
+        body, 
         timestamp,
         secret
     );

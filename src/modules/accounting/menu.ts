@@ -13,23 +13,35 @@ import {
   ListOrdered,
   BookText,
   ClipboardPen,
-  Settings,
+  FolderTree,
+  ChartColumnBig,
 } from "lucide-react";
 
 const accountingMenu = [
   {
-    title: "Overview",
+    title: "Dashboard",
     items: [
       {
         name: "Accounting Dashboard",
         icon: LayoutDashboard,
         href: "/accounting",
       },
+      {
+        name: "Summary Keuangan",
+        icon: ChartColumnBig,
+        href: "/accounting/summary",
+      },
     ],
   },
+
   {
     title: "Master Data",
     items: [
+      {
+        name: "Klasifikasi Akun",
+        icon: FolderTree,
+        href: "/accounting/account-categories",
+      },
       {
         name: "Akun Jurnal",
         icon: BookOpen,
@@ -55,8 +67,14 @@ const accountingMenu = [
         icon: Users,
         href: "/accounting/customers",
       },
+      {
+        name: "Pengaturan PPN",
+        icon: Percent,
+        href: "/accounting/tax-settings",
+      },
     ],
   },
+
   {
     title: "Transaksi",
     items: [
@@ -71,19 +89,20 @@ const accountingMenu = [
         href: "/accounting/invoices",
       },
       {
-        name: "Pendapatan / Revenue",
+        name: "Pendapatan",
         icon: BadgeDollarSign,
         href: "/accounting/revenue",
       },
       {
-        name: "Pengeluaran / Expenses",
+        name: "Pengeluaran",
         icon: CreditCard,
         href: "/accounting/expenses",
       },
     ],
   },
+
   {
-    title: "Pencatatan Akuntansi",
+    title: "Reporting",
     items: [
       {
         name: "List Transaksi",
@@ -99,21 +118,6 @@ const accountingMenu = [
         name: "Jurnal Penyesuaian",
         icon: ClipboardPen,
         href: "/accounting/adjusting-entries",
-      },
-    ],
-  },
-  {
-    title: "Pengaturan",
-    items: [
-      {
-        name: "Pengaturan PPN / VAT",
-        icon: Percent,
-        href: "/accounting/tax-settings",
-      },
-      {
-        name: "Accounting Settings",
-        icon: Settings,
-        href: "/accounting/settings",
       },
     ],
   },
