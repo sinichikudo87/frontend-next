@@ -7,33 +7,14 @@ type ApiResponse<T> = {
     message?: string;
 };
 
-export async function getReporting<T = any>(
-    userId: number,
-    departmentId: number
-): Promise<ApiResponse<T>> {
-
+export async function getAccountCategory<T = any>(id: number): Promise<ApiResponse<T>> {
     const method = "GET";
-
-    /*
-    |--------------------------------------------------------------------------
-    | URL
-    |--------------------------------------------------------------------------
-    */
-
-    const url = `/public/v1/kpi-reporting/${userId}/${departmentId}`;
-
+    const url = `/public/v1/acc-account-categories/${id}`;
     const body = "";
 
     const timestamp = Math.floor(Date.now() / 1000);
 
-    const secret =
-        process.env.NEXT_PUBLIC_API_SECRET_KEY ?? "";
-
-    /*
-    |--------------------------------------------------------------------------
-    | SIGNATURE
-    |--------------------------------------------------------------------------
-    */
+    const secret = process.env.NEXT_PUBLIC_API_SECRET_KEY ?? "";
 
     const signature = generateSignature(
         method,
@@ -42,12 +23,6 @@ export async function getReporting<T = any>(
         timestamp,
         secret
     );
-
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH
-    |--------------------------------------------------------------------------
-    */
 
     const response = await fetch(
         `${API_CONFIG.BASE_URL}${url}`,
@@ -68,8 +43,7 @@ export async function getReporting<T = any>(
 
     if (!response.ok) {
         throw new Error(
-            result?.message ||
-            `Failed fetch reporting (${response.status})`
+            result?.message || `Failed fetch customer (${response.status})`
         );
     }
 

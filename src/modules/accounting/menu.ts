@@ -27,7 +27,7 @@ const accountingMenu = [
         href: "/accounting",
       },
       {
-        name: "Summary Keuangan",
+        name: "Financial Summary",
         icon: ChartColumnBig,
         href: "/accounting/summary",
       },
@@ -38,37 +38,37 @@ const accountingMenu = [
     title: "Master Data",
     items: [
       {
-        name: "Klasifikasi Akun",
+        name: "Account Category",
         icon: FolderTree,
-        href: "/accounting/account-categories",
+        href: "/dashboard/accounting/account-category",
       },
       {
-        name: "Akun Jurnal",
+        name: "Journal Accounts",
         icon: BookOpen,
         href: "/accounting/accounts",
       },
       {
-        name: "Saldo Awal",
+        name: "Opening Balance",
         icon: Wallet,
         href: "/accounting/opening-balance",
       },
       {
-        name: "Produk",
+        name: "Products",
         icon: Package,
         href: "/accounting/products",
       },
       {
-        name: "Supplier / Vendor",
+        name: "Suppliers / Vendors",
         icon: Truck,
         href: "/accounting/vendors",
       },
       {
-        name: "Pelanggan / Customer",
+        name: "Customers",
         icon: Users,
         href: "/accounting/customers",
       },
       {
-        name: "Pengaturan PPN",
+        name: "VAT Settings",
         icon: Percent,
         href: "/accounting/tax-settings",
       },
@@ -76,25 +76,25 @@ const accountingMenu = [
   },
 
   {
-    title: "Transaksi",
+    title: "Transactions",
     items: [
       {
-        name: "Purchase Order",
+        name: "Purchase Orders",
         icon: ShoppingCart,
         href: "/accounting/purchase-orders",
       },
       {
-        name: "Tagihan / Invoice",
+        name: "Invoices",
         icon: Receipt,
         href: "/accounting/invoices",
       },
       {
-        name: "Pendapatan",
+        name: "Revenue",
         icon: BadgeDollarSign,
         href: "/accounting/revenue",
       },
       {
-        name: "Pengeluaran",
+        name: "Expenses",
         icon: CreditCard,
         href: "/accounting/expenses",
       },
@@ -105,17 +105,17 @@ const accountingMenu = [
     title: "Reporting",
     items: [
       {
-        name: "List Transaksi",
+        name: "Transaction List",
         icon: ListOrdered,
         href: "/accounting/transactions",
       },
       {
-        name: "Buku Jurnal",
+        name: "Journal Book",
         icon: BookText,
         href: "/accounting/journal-entries",
       },
       {
-        name: "Jurnal Penyesuaian",
+        name: "Adjusting Entries",
         icon: ClipboardPen,
         href: "/accounting/adjusting-entries",
       },
