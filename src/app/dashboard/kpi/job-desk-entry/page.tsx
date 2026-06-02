@@ -28,6 +28,10 @@ export type JobDeskKPI = {
   period_month: number;
   period_year: number;
   status: string;
+  department: string;
+  target_indicator: string;
+  is_active: number;
+  created_at: string;
   daily_logs: DailyProgressLog[];
 };
 
@@ -79,7 +83,11 @@ export default async function Page() {
           period_month: Number(item.period_month ?? 0),
           period_year: Number(item.period_year ?? 0),
           status: item.status ?? "PENDING",
-          daily_logs: dailyLogsFromApi
+          daily_logs: dailyLogsFromApi,
+          department: item.department ?? "-",
+          target_indicator: item.target_indicator ?? item.target_value ?? "-",
+          is_active: Number(item.is_active ?? 1),
+          created_at: item.created_at ?? new Date().toISOString()
         };
       });
     }

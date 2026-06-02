@@ -19,7 +19,7 @@ export async function getJobDeskEntry<T = any>(id: number): Promise<ApiResponse<
     const signature = generateSignature(
         method,
         url,
-        body,
+        body, 
         timestamp,
         secret
     );
