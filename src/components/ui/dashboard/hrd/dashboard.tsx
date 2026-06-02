@@ -71,12 +71,12 @@ export default function HRDDashboardClient({
       </div>
 
       {/* SUMMARY */}
-      <motion.div
-        initial="hidden"
-        animate="show"
-        transition={{ trickleChildren: 0.12, staggerChildren: 0.12 }}
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5"
-      >
+        <motion.div
+          initial="hidden"
+          animate="show"
+          transition={{ staggerChildren: 0.12 }}
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5"
+        >
         {/* CARD 1 */}
         <motion.div
           variants={fadeUp}
