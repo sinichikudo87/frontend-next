@@ -2,9 +2,6 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import HRDDashboardClient from "@/components/ui/dashboard/hrd/dashboard";
 
 async function getHRDData() {
-  // const res = await fetch('https://api.perusahaan.com/hrd', { cache: 'no-store' });
-  // return res.json();
-
   const attendanceData = [
     { month: "Jan", value: 78 },
     { month: "Feb", value: 82 },

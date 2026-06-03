@@ -13,6 +13,7 @@ import {
   HeartHandshake,
   FileSpreadsheet,
   Settings,
+  MapPin,
 } from "lucide-react";
 
 const hrdMenu = [
@@ -20,7 +21,7 @@ const hrdMenu = [
     title: "Overview",
     items: [
       {
-        name: "HRD Dashboard",
+        name: "HR Dashboard",
         icon: LayoutDashboard,
         href: "/hrd",
       },
@@ -29,55 +30,56 @@ const hrdMenu = [
   {
     title: "Master Data",
     items: [
-      { name: "Data Karyawan", icon: Users, href: "/hrd/master/employees" },
-      { name: "Struktur Organisasi / Jabatan", icon: Briefcase, href: "/hrd/master/departments" },
-      { name: "Data Kontrak Kerja", icon: FileText, href: "/hrd/master/contracts" },
-      { name: "Data Calon Karyawan (Kandidat)", icon: UserCheck, href: "/hrd/master/candidates" },
+      { name: "Employee Directory", icon: Users, href: "/hrd/master/employees" },
+      { name: "Organization & Job Titles", icon: Briefcase, href: "/hrd/master/departments" },      
+      { name: "Employment Contracts", icon: FileText, href: "/hrd/master/contracts" },
+      { name: "Candidates & Applicants", icon: UserCheck, href: "/hrd/master/candidates" },
     ],
   },
   {
-    title: "Manajemen Kehadiran",
+    title: "Time & Attendance",
     items: [
-      { name: "Presensi / Absensi", icon: Clock, href: "/hrd/attendance/logs" },
-      { name: "Pengajuan Cuti & Izin", icon: CalendarDays, href: "/hrd/attendance/leaves" },
-      { name: "Manajemen Lembur (Overtime)", icon: Clock, href: "/hrd/attendance/overtime" },
-      { name: "Jadwal Kerja / Shift", icon: CalendarDays, href: "/hrd/attendance/shifts" },
+      { name: "Attendance Logs", icon: Clock, href: "/hrd/attendance/logs" },
+      { name: "Leave & Time Off Requests", icon: CalendarDays, href: "/hrd/attendance/leaves" },
+      { name: "Overtime Management", icon: Clock, href: "/hrd/attendance/overtime" },
+      { name: "Work Schedules & Shifts", icon: CalendarDays, href: "/hrd/attendance/shifts" },
     ],
   },
   {
-    title: "Payroll & Benefit",
+    title: "Payroll & Benefits",
     items: [
-      { name: "Proses Gaji (Payroll)", icon: Coins, href: "/hrd/payroll/process" },
-      { name: "Slip Gaji Karyawan", icon: FileText, href: "/hrd/payroll/slips" },
-      { name: "Insentif, Bonus & Lemburan", icon: Coins, href: "/hrd/payroll/allowances" },
-      { name: "Potongan Kasbon / Pinjaman", icon: Coins, href: "/hrd/payroll/loans" },
-      { name: "BPJS & Asuransi Kesehatan", icon: HeartHandshake, href: "/hrd/payroll/insurance" },
+      { name: "Payroll Processing", icon: Coins, href: "/hrd/payroll/process" },
+      { name: "Employee Payslips", icon: FileText, href: "/hrd/payroll/slips" },
+      { name: "Incentives, Bonuses & Allowances", icon: Coins, href: "/hrd/payroll/allowances" },
+      { name: "Cash Advances & Loans", icon: Coins, href: "/hrd/payroll/loans" },
+      { name: "Social Security & Insurance", icon: HeartHandshake, href: "/hrd/payroll/insurance" },
     ],
   },
   {
-    title: "Operasional HRD",
+    title: "HR Operations",
     items: [
-      { name: "Rekrutmen & Seleksi", icon: UserCheck, href: "/hrd/operations/recruitment" },
-      { name: "Pelatihan & Training Karyawan", icon: GraduationCap, href: "/hrd/operations/training" },
-      { name: "Penilaian Kinerja (KPI / Appraisals)", icon: FileText, href: "/hrd/operations/performance" },
-      { name: "Pelanggaran & SP (Surat Peringatan)", icon: ShieldAlert, href: "/hrd/operations/disciplinary" },
-      { name: "Resign & Pemutusan Hubungan Kerja (PHK)", icon: UserX, href: "/hrd/operations/termination" },
+      { name: "Recruitment & Selection", icon: UserCheck, href: "/hrd/operations/recruitment" },
+      { name: "Training & Development", icon: GraduationCap, href: "/hrd/operations/training" },
+      { name: "Performance Review (KPI)", icon: FileText, href: "/hrd/operations/performance" },
+      { name: "Disciplinary Actions & Warning Letters", icon: ShieldAlert, href: "/hrd/operations/disciplinary" },
+      { name: "Resignations & Terminations", icon: UserX, href: "/hrd/operations/termination" },
     ],
   },
   {
-    title: "Reporting HRD",
+    title: "HR Reporting",
     items: [
-      { name: "Laporan Rekap Absensi", icon: FileSpreadsheet, href: "/hrd/reporting/attendance" },
-      { name: "Laporan Pengeluaran Gaji (Payroll)", icon: FileSpreadsheet, href: "/hrd/reporting/payroll" },
-      { name: "Laporan Turn Over Karyawan", icon: FileSpreadsheet, href: "/hrd/reporting/turnover" },
-      { name: "Laporan Sisa Cuti Karyawan", icon: FileSpreadsheet, href: "/hrd/reporting/leaves" },
+      { name: "Attendance Summary Report", icon: FileSpreadsheet, href: "/hrd/reporting/attendance" },
+      { name: "Payroll Expense Report", icon: FileSpreadsheet, href: "/hrd/reporting/payroll" },
+      { name: "Employee Turnover Report", icon: FileSpreadsheet, href: "/hrd/reporting/turnover" },
+      { name: "Remaining Leave Balance Report", icon: FileSpreadsheet, href: "/hrd/reporting/leaves" },
     ],
   },
   {
-    title: "Pengaturan",
+    title: "Settings",
     items: [
-      { name: "Komponen Gaji & Pajak PPh21", icon: Settings, href: "/hrd/settings/payroll-components" },
-      { name: "HRD Settings", icon: Settings, href: "/hrd/settings" },
+      { name: "Locations", icon: MapPin, href: "/hrd/master/location" },
+      { name: "Salary Components & Income Tax", icon: Settings, href: "/hrd/settings/payroll-components" },
+      { name: "HR Settings", icon: Settings, href: "/hrd/settings" },
     ],
   },
 ];
