@@ -1,26 +1,32 @@
 import { generateSignature } from "@/lib/hmac";
 import { API_CONFIG } from "@/lib/config";
 
-export type DepartmentData = {
-    id: number;
-    name: string;
-    description?: string;
+/* ================= TYPES (DISESUAIKAN DENGAN LARAVEL) ================= */
+export type SaveJobDeskMasterPayload = {
+    id?: number | null;
+    company_id: number;
+    job_title: string;
+    department_id: number;
+    kpi_name: string;
+    target_indicator: string;
+    weight: number;
     is_active?: number;
-    type?: number;
 };
 
 type ApiResponse<T> = {
     success: boolean;
     data: T;
-    departments?: DepartmentData[];
     message?: string;
+    errors?: any;
 };
 
-export async function getJobDeskMaster<T = any>(id: number): Promise<ApiResponse<T>> {
-    const method = "GET";
-    const url = `/public/v1/job-desk-master/${id}`;
-    const body = "";
-
+/* ================= API FUNCTION ================= */
+export async function saveJobDeskMaster<T = any>(
+    payload: SaveJobDeskMasterPayload
+): Promise<ApiResponse<T>> {
+    const method = "POST";
+    const url = "/public/v1/job-desk-master/store";
+    const body = JSON.stringify(payload);
     const timestamp = Math.floor(Date.now() / 1000);
     const secret = process.env.NEXT_PUBLIC_API_SECRET_KEY ?? "";
 
@@ -43,6 +49,7 @@ export async function getJobDeskMaster<T = any>(id: number): Promise<ApiResponse
                 "X-TIMESTAMP": timestamp.toString(),
                 "X-SIGNATURE": signature,
             },
+            body,
             cache: "no-store",
         }
     );
@@ -51,7 +58,7 @@ export async function getJobDeskMaster<T = any>(id: number): Promise<ApiResponse
 
     if (!response.ok) {
         throw new Error(
-            result?.message || `Failed to fetch job desk master (${response.status})`
+            result?.message || `Failed to save job desk master (${response.status})`
         );
     }
 

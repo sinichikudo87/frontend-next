@@ -3,15 +3,24 @@
 import React, { useState } from "react";
 import { X, Briefcase, Target, Percent, FileText, CheckCircle } from "lucide-react";
 import Swal from "sweetalert2";
+import { saveJobDeskMaster } from "../../../../store/kpi/jobDeskMaster/save"; 
+
+type DepartmentData = {
+  id: number;
+  name: string;
+  description?: string;
+  is_active?: number;
+  type?: number;
+};
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onSaveSuccess?: () => void;
+  departments: DepartmentData[];
 };
 
-export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
-  // Form States
+export default function AddNewModal({ open, onClose, onSaveSuccess, departments = [] }: Props) {
   const [jobTitle, setJobTitle] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [kpiName, setKpiName] = useState("");
@@ -21,12 +30,8 @@ export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
-
-  // Form Submit Handler
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
     if (!jobTitle || !departmentId || !kpiName || !weight || !targetIndicator) {
       Swal.fire({
         icon: "warning",
@@ -40,34 +45,44 @@ export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
 
     try {
       setSubmitting(true);
+      const payload = {
+        id: 0,
+        company_id: 1,
+        job_title: jobTitle,
+        department_id: Number(departmentId),
+        kpi_name: kpiName,
+        target_indicator: targetIndicator,
+        weight: Number(weight),
+        is_active: Number(isActive),
+      };
 
-      // Simulation of API request
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await saveJobDeskMaster(payload);
 
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "New Job Desk KPI has been successfully added!",
-        background: "#0f172a",
-        color: "#fff",
-      });
+      if (response.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: response.message || "New Job Desk KPI has been successfully added!",
+          background: "#0f172a",
+          color: "#fff",
+        });
 
-      // Reset Form
-      setJobTitle("");
-      setDepartmentId("");
-      setKpiName("");
-      setWeight("");
-      setTargetIndicator("");
-      setIsActive("1");
+        setJobTitle("");
+        setDepartmentId("");
+        setKpiName("");
+        setWeight("");
+        setTargetIndicator("");
+        setIsActive("1");
 
-      if (onSaveSuccess) onSaveSuccess();
-      onClose();
-    } catch (err) {
-      console.error(err);
+        if (onSaveSuccess) onSaveSuccess();
+        onClose();
+      }
+    } catch (err: any) {
+      console.error("Error saving job desk:", err);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to save data to the database.",
+        text: err.message || "Failed to save data to the database.",
         background: "#0f172a",
         color: "#fff",
       });
@@ -90,6 +105,7 @@ export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition"
           >
@@ -116,22 +132,30 @@ export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
                 />
               </div>
 
-              {/* DEPARTMENT ID */}
+              {/* DEPARTMENT ID (DINAMIS) */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/70 flex items-center gap-2">
                   <Target className="w-4 h-4 text-purple-400" /> Department
                 </label>
-                <select
-                  value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                  className="w-full h-12 px-4 rounded-2xl bg-[#1f2937] border border-white/10 outline-none focus:border-purple-500/50 text-white transition text-sm appearance-none cursor-pointer"
-                >
-                  <option value="" disabled hidden>Select Department...</option>
-                  <option value="1">IT Department</option>
-                  <option value="2">Human Resources</option>
-                  <option value="3">Finance & Accounting</option>
-                  <option value="4">Marketing & Sales</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                    className="w-full h-12 px-4 rounded-2xl bg-[#1f2937] border border-white/10 outline-none focus:border-purple-500/50 text-white transition text-sm cursor-pointer appearance-none"
+                  >
+                    <option value="" disabled hidden>Select Department...</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id} className="bg-[#111827]">
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                  {departments.length === 0 && (
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-red-400">
+                      No departments loaded
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* KPI NAME */}
@@ -174,8 +198,8 @@ export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
                   onChange={(e) => setIsActive(e.target.value)}
                   className="w-full h-12 px-4 rounded-2xl bg-[#1f2937] border border-white/10 outline-none focus:border-blue-500/50 text-white transition text-sm cursor-pointer"
                 >
-                  <option value="1">ACTIVE</option>
-                  <option value="0">INACTIVE</option>
+                  <option value="1" className="bg-[#111827]">ACTIVE</option>
+                  <option value="0" className="bg-[#111827]">INACTIVE</option>
                 </select>
               </div>
 
@@ -200,7 +224,7 @@ export default function AddNewModal({ open, onClose, onSaveSuccess }: Props) {
           <div className="px-6 py-5 border-t border-white/10 bg-black/20 flex justify-end gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onClose} 
               disabled={submitting}
               className="h-12 px-5 rounded-2xl bg-white/5 hover:bg-white/10 transition text-sm text-white/80 font-medium disabled:opacity-50"
             >

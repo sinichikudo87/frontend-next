@@ -1,26 +1,30 @@
 import { generateSignature } from "@/lib/hmac";
 import { API_CONFIG } from "@/lib/config";
 
-export type DepartmentData = {
-    id: number;
-    name: string;
-    description?: string;
-    is_active?: number;
-    type?: number;
+/* ================= TYPES (DISESUAIKAN DENGAN LOG PROGRESS HARIAN) ================= */
+export type SaveKpiWorkProgressUpdatePayload = {
+    user_jobdesk_kpi_id: number;
+    date: string;
+    actual_value_submitted: string;
+    score_impact: number;
+    notes: string | null;
+    attachment_url: string | null;
 };
 
 type ApiResponse<T> = {
     success: boolean;
     data: T;
-    departments?: DepartmentData[];
     message?: string;
+    errors?: any;
 };
 
-export async function getJobDeskMaster<T = any>(id: number): Promise<ApiResponse<T>> {
-    const method = "GET";
-    const url = `/public/v1/job-desk-master/${id}`;
-    const body = "";
-
+/* ================= API FUNCTION ================= */
+export async function saveKpiWorkProgressUpdate<T = any>(
+    payload: SaveKpiWorkProgressUpdatePayload
+): Promise<ApiResponse<T>> {
+    const method = "POST";
+    const url = "/public/v1/kpi-work-progress-update/store"; 
+    const body = JSON.stringify(payload);
     const timestamp = Math.floor(Date.now() / 1000);
     const secret = process.env.NEXT_PUBLIC_API_SECRET_KEY ?? "";
 
@@ -43,6 +47,7 @@ export async function getJobDeskMaster<T = any>(id: number): Promise<ApiResponse
                 "X-TIMESTAMP": timestamp.toString(),
                 "X-SIGNATURE": signature,
             },
+            body,
             cache: "no-store",
         }
     );
@@ -51,7 +56,7 @@ export async function getJobDeskMaster<T = any>(id: number): Promise<ApiResponse
 
     if (!response.ok) {
         throw new Error(
-            result?.message || `Failed to fetch job desk master (${response.status})`
+            result?.message || `Failed to save KPI work progress update (${response.status})`
         );
     }
 

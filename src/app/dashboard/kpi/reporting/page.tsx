@@ -7,7 +7,7 @@ export const revalidate = 0;
 export default async function Page() {
   try {
 
-    const response = await getReporting(10, 9);
+    const response = await getReporting("null" as any, 9);
 
     const initialData =
       response?.success &&

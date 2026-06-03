@@ -52,13 +52,13 @@ export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientPr
   const [users, setUsers] = useState<UserData[]>([]);
 
   const [selectedRecords, setSelectedRecords] = useState<number[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]); 
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   /* ================= LOAD DATA ================= */
   const refreshData = async () => {
     try {
-      const res: any = await getJobDeskEntry(1); 
+      const res: any = await getJobDeskEntry(1);
       if (!res?.success || !res.data) return;
 
       const rawJobDesks = res.data.job_desks ?? [];
@@ -110,10 +110,23 @@ export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientPr
     );
   };
 
+  /* ================= CHECK ALL EMPLOYEE LOGIC ================= */
+  const isAllEmployeesChecked = useMemo(() => {
+    return users.length > 0 && selectedUserIds.length === users.length;
+  }, [users, selectedUserIds]);
+
+  const handleToggleAllEmployees = () => {
+    if (isAllEmployeesChecked) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(users.map((u) => u.id));
+    }
+  };
+
   /* ================= BATCH SAVE ================= */
   const handleBatchSave = async () => {
     if (selectedRecords.length === 0) return;
-    
+
     if (selectedUserIds.length === 0) {
       Swal.fire("Peringatan", "Pilih/centang minimal satu karyawan terlebih dahulu!", "warning");
       return;
@@ -121,31 +134,43 @@ export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientPr
 
     setIsSaving(true);
     try {
+      // 1. Ambil semua master KPI yang dicentang oleh user
       const selectedItems = jobDesks.filter((d) => selectedRecords.includes(d.id));
-      const primaryTargetUserId = selectedUserIds[0];
-      const targetUser = users.find((u) => u.id === primaryTargetUserId);
 
-      const logs = selectedItems.map((item) => ({
-        company_id: item.company_id,
-        user_id: primaryTargetUserId, 
-        jobdesk_master_id: item.id,
-        target_value: item.target_indicator,
-        period_month: new Date().getMonth() + 1,
-        period_year: new Date().getFullYear(),
-        date: new Date().toISOString().split("T")[0],
-        actual_value_submitted: item.weight.toString(),
-        score_impact: item.weight,
-        notes: `Batch save untuk karyawan: ${targetUser ? targetUser.name : "Unknown"}`,
-        attachment_url: ""
-      }));
+      // 2. MATRIKS KOMBINASI: Kombinasikan setiap Karyawan dengan setiap KPI yang dipilih
+      const logs = selectedUserIds.flatMap((userId) => {
+        const targetUser = users.find((u) => u.id === userId);
 
+        return selectedItems.map((item) => ({
+          company_id: item.company_id,
+          user_id: userId, // 🌟 Sekarang menggunakan ID masing-masing karyawan hasil loop
+          jobdesk_master_id: item.id,
+          target_value: item.target_indicator,
+          period_month: new Date().getMonth() + 1,
+          period_year: new Date().getFullYear(),
+          date: new Date().toISOString().split("T")[0],
+          actual_value_submitted: item.weight.toString(),
+          score_impact: item.weight,
+          notes: `Batch save untuk karyawan: ${targetUser ? targetUser.name : "Unknown"}`,
+          attachment_url: ""
+        }));
+      });
+
+      console.log("Total logs dikirim ke Laravel:", logs.length, logs);
       const res = await saveJobDeskEntry({ logs });
 
       if (res.success) {
         await refreshData();
         setSelectedRecords([]);
-        setSelectedUserIds([]); 
-        Swal.fire("Success", "Data progress log berhasil disimpan!", "success");
+        setSelectedUserIds([]);
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: `Data progress log untuk ${selectedUserIds.length} karyawan berhasil disimpan!`,
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+        });
       } else {
         Swal.fire("Error", res.message || "Gagal menyimpan log", "error");
       }
@@ -178,7 +203,7 @@ export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientPr
   return (
     <DashboardLayout>
       <div className="p-4 space-y-6 text-white">
-        
+
         {/* HEADER */}
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 md:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between relative z-10">
@@ -217,21 +242,44 @@ export default function JobDeskEntryClient({ initialData }: JobDeskEntryClientPr
 
         {/* USER SECTION */}
         <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
-          <div className="flex justify-between items-center">
-            <p className="text-sm font-semibold text-gray-400">Pilih Karyawan Target:</p>
-            <p className="text-xs text-gray-500">Selected: {selectedUserIds.length}</p>
-          </div> 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-2">
+            <div>
+              <p className="text-sm font-semibold text-gray-400">Pilih Karyawan Target:</p>
+              <p className="text-xs text-gray-500 mt-0.5">Selected: {selectedUserIds.length} / {users.length}</p>
+            </div>
+
+            {/* TOMBOL CHECK ALL EMPLOYEE */}
+            {users.length > 0 && (
+              <button
+                type="button"
+                onClick={handleToggleAllEmployees}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-all text-xs font-semibold text-purple-400 self-start sm:self-auto"
+              >
+                {isAllEmployeesChecked ? (
+                  <>
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    <span>Deselect All</span>
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-3.5 h-3.5" />
+                    <span>Select All Employees</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 pt-1">
             {users.map((user) => (
               <button
                 key={user.id}
                 type="button"
                 onClick={() => handleSelectUser(user.id)}
-                className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all ${
-                  selectedUserIds.includes(user.id)
+                className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all ${selectedUserIds.includes(user.id)
                     ? "bg-purple-600/30 border-purple-500 text-purple-200"
                     : "bg-white/5 border-white/5 hover:bg-white/10 text-gray-300"
-                }`}
+                  }`}
               >
                 {selectedUserIds.includes(user.id) ? <CheckSquare className="w-4 h-4 text-purple-400" /> : <Square className="w-4 h-4 text-gray-500" />}
                 <div className="truncate text-sm">{user.name}</div>

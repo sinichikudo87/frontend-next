@@ -3,9 +3,9 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AddData from "@/components/modals/kpi/job-desk-master/AddNewModal";
 import React, { useEffect, useState } from "react";
-import Swal from "sweetalert2";
 
 import { getJobDeskMaster } from "../../../../../lib/kpi/jobDeskMaster/view";
+import type { DepartmentData } from "../../../../../lib/kpi/jobDeskMaster/view";
 
 import {
   Search,
@@ -32,12 +32,17 @@ type JobDeskKPI = {
 
 interface JobDeskMasterClientProps {
   initialData: JobDeskKPI[];
+  initialDepartments?: DepartmentData[]; // Menerima data awal department dari SSR
 }
 
-export default function JobDeskMasterClient({ initialData }: JobDeskMasterClientProps) {
+export default function JobDeskMasterClient({ 
+  initialData, 
+  initialDepartments = [] 
+}: JobDeskMasterClientProps) {
   const [search, setSearch] = useState("");
   const [openRow, setOpenRow] = useState<number | null>(null);
   const [jobDesks, setJobDesks] = useState<JobDeskKPI[]>(initialData ?? []);
+  const [departments, setDepartments] = useState<DepartmentData[]>(initialDepartments);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   /* ================= PAGINATION ================= */
@@ -48,18 +53,26 @@ export default function JobDeskMasterClient({ initialData }: JobDeskMasterClient
   const refreshData = async () => {
     try {
       const res = await getJobDeskMaster(1);
-      if (res?.success && res.data) {
-        const rawItems = Array.isArray(res.data) ? res.data : [res.data];
-        const mapped: JobDeskKPI[] = rawItems.map((item: any) => ({
-          id: Number(item.id),
-          job_title: item.job_title ?? "-",
-          department: item.department ?? "-",
-          kpi_name: item.kpi_name ?? "-",
-          target_indicator: item.target_indicator ?? "-",
-          weight: Number(item.weight ?? 0),
-          is_active: Number(item.is_active ?? 1),
-        }));
-        setJobDesks(mapped);
+      if (res?.success) {
+        // 1. Sync data JobDesk
+        if (res.data) {
+          const rawItems = Array.isArray(res.data) ? res.data : [res.data];
+          const mapped: JobDeskKPI[] = rawItems.map((item: any) => ({
+            id: Number(item.id),
+            job_title: item.job_title ?? "-",
+            department: item.department ?? "-",
+            kpi_name: item.kpi_name ?? "-",
+            target_indicator: item.target_indicator ?? "-",
+            weight: Number(item.weight ?? 0),
+            is_active: Number(item.is_active ?? 1),
+          }));
+          setJobDesks(mapped);
+        }
+
+        // 2. Sync data Departments jika ada pembaruan dari DB
+        if (res.departments && Array.isArray(res.departments)) {
+          setDepartments(res.departments);
+        }
       }
     } catch (err) {
       console.error("Gagal menyegarkan data master job desk:", err);
@@ -109,7 +122,7 @@ export default function JobDeskMasterClient({ initialData }: JobDeskMasterClient
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search..."
-                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-cyan-500/50 transition-colors"
+                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-cyan-500/50 transition-colors text-sm"
               />
             </div>
 
@@ -251,7 +264,7 @@ export default function JobDeskMasterClient({ initialData }: JobDeskMasterClient
             <button
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-white/5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition"
+              className="px-4 py-2 bg-white/5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition text-sm font-medium"
             >
               Prev
             </button>
@@ -260,7 +273,7 @@ export default function JobDeskMasterClient({ initialData }: JobDeskMasterClient
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`px-4 py-2 rounded-xl transition ${
+                className={`px-4 py-2 rounded-xl transition text-sm font-medium ${
                   currentPage === i + 1 ? "bg-cyan-500 text-black font-semibold" : "bg-white/5 hover:bg-white/10"
                 }`}
               >
@@ -271,7 +284,7 @@ export default function JobDeskMasterClient({ initialData }: JobDeskMasterClient
             <button
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-white/5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition"
+              className="px-4 py-2 bg-white/5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition text-sm font-medium"
             >
               Next
             </button>
@@ -280,7 +293,12 @@ export default function JobDeskMasterClient({ initialData }: JobDeskMasterClient
 
       </div>
 
-      <AddData open={isModalOpen} onClose={() => setIsModalOpen(false)} onSaveSuccess={refreshData} />
+      <AddData 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSaveSuccess={refreshData} 
+        departments={departments}
+      />
     </DashboardLayout>
   );
 }
