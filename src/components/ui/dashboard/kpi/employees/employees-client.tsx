@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
  
-import { getCustomer } from "../../../../../lib/crm/customers/view";
+import { getEmployee } from "../../../../../lib/kpi/employees/view";
 
 import {
   Search,
@@ -34,7 +34,7 @@ interface EmployeeClientProps {
 export default function EmployeeClient({ initialData }: EmployeeClientProps) {
   const [search, setSearch] = useState("");
   const [openRow, setOpenRow] = useState<number | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>(initialData);
+  const [employees, setEmployees] = useState<Customer[]>(initialData);
 
   /* ================= PAGINATION ================= */
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,25 +43,25 @@ export default function EmployeeClient({ initialData }: EmployeeClientProps) {
   /* ================= SILENT RE-FETCH (PASCA ACTIONS) ================= */
   const refreshData = async () => {
     try {
-      const res = await getCustomer(1);
+      const res = await getEmployee(1);
       if (res?.success && Array.isArray(res.data)) {
         const mapped: Customer[] = res.data.map((item: any) => ({
           id: Number(item.id),
           name: item.name ?? "-",
-          phone: item.phone ?? "-",
+          phone: item.telepon ?? "-", // DIUBAH: Sesuai nama kolom asli DB ('telepon')
           email: item.email ?? "-",
-          address: item.address ?? "-",
+          address: item.address ?? "-", // Sesuai mapping agar tipe data 'Customer' terpenuhi
           is_active: Number(item.is_active ?? 1),
         }));
-        setCustomers(mapped);
+        setEmployees(mapped);
       }
     } catch (err) {
-      console.error("Gagal menyegarkan data customer:", err);
+      console.error("Gagal menyegarkan data employee:", err);
     }
   };
 
   /* ================= FILTER LOGIC ================= */
-  const filteredData = customers.filter((item) =>
+  const filteredData = employees.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -88,9 +88,9 @@ export default function EmployeeClient({ initialData }: EmployeeClientProps) {
                 <Users className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Customer Management</h1>
+                <h1 className="text-2xl font-bold">Employee Management</h1>
                 <p className="text-sm text-white/50">
-                  Total Customer: {filteredData.length}
+                  Total Employee: {filteredData.length}
                 </p>
               </div>
             </div>
@@ -102,7 +102,7 @@ export default function EmployeeClient({ initialData }: EmployeeClientProps) {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari customer..."
+              placeholder="Cari employee..." // Sedikit kosmetik penamaan placeholder
               className="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-cyan-500/40 transition"
             />
           </div>
@@ -112,7 +112,7 @@ export default function EmployeeClient({ initialData }: EmployeeClientProps) {
         <div className="space-y-4">
           {paginatedData.length === 0 ? (
             <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10 text-white/40">
-              Tidak ada data customer
+              Tidak ada data employee
             </div>
           ) : (
             paginatedData.map((item) => {

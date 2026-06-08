@@ -7,9 +7,9 @@ type ApiResponse<T> = {
     message?: string;
 };
 
-export async function getCustomer<T = any>(id: number): Promise<ApiResponse<T>> {
+export async function getEmployee<T = any>(id: number): Promise<ApiResponse<T>> {
     const method = "GET";
-    const url = `/public/v1/customers/${id}`;
+    const url = `/public/v1/employees/${id}`;
     const body = "";
 
     const timestamp = Math.floor(Date.now() / 1000);
@@ -43,7 +43,7 @@ export async function getCustomer<T = any>(id: number): Promise<ApiResponse<T>> 
 
     if (!response.ok) {
         throw new Error(
-            result?.message || `Failed fetch customer (${response.status})`
+            result?.message || `Failed fetch employee (${response.status})`
         );
     }
 
