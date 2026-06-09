@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import {
   Car,
   User,
@@ -34,11 +34,10 @@ type TenderDataSummary = {
   harga_deal: number;
 };
 
-// Konfigurasi style dasar untuk SweetAlert2 Dark Mode agar serasi dengan UI Anda
 const darkSwal = Swal.mixin({
   background: "#1c0c30",
   color: "#fff",
-  confirmButtonColor: "#10b981", // Emerald 500
+  confirmButtonColor: "#10b981",
   denyButtonColor: "#ef4444",
   customClass: {
     popup: "rounded-3xl border border-white/10 backdrop-blur-3xl shadow-2xl",
@@ -48,7 +47,8 @@ const darkSwal = Swal.mixin({
   }
 });
 
-export default function UploadsDocument() {
+// 1. The main logic component that consumes searchParams
+function UploadsDocumentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const encryptedId = searchParams.get("id");
@@ -202,7 +202,6 @@ export default function UploadsDocument() {
       }
     } catch (error) {
       console.error("Gagal mengirim berkas dokumen pendukung:", error);
-      // GANTI SWAL: Error koneksi internet/server down
       darkSwal.fire({
         icon: "error",
         title: "KONEKSI BERMASALAH",
@@ -233,7 +232,6 @@ export default function UploadsDocument() {
 
   return (
     <div className="min-h-screen w-full bg-[linear-gradient(to_right,_#160040,_#9A0680)] relative overflow-hidden pb-12 px-3 md:px-0">
-
       <style>{`
         @keyframes floatUp {
           0% { transform: translateY(0) scale(0.7); opacity: 0; }
@@ -253,11 +251,9 @@ export default function UploadsDocument() {
         }
       `}</style>
 
-      {/* Glow Background */}
       <div className="absolute top-0 left-0 w-72 h-72 md:w-96 md:h-96 bg-fuchsia-500/20 blur-[100px] md:blur-[140px]" />
       <div className="absolute bottom-0 right-0 w-72 h-72 md:w-96 md:h-96 bg-violet-500/20 blur-[100px] md:blur-[140px]" />
 
-      {/* Floating Bubbles */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         {bubbles.map((bubble, index) => (
           <div
@@ -269,10 +265,8 @@ export default function UploadsDocument() {
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto pt-6 md:pt-10 space-y-6">
-
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/10 bg-black/20 backdrop-blur-3xl p-5 md:p-8 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 md:w-14 md:h-14 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-400/20 flex items-center justify-center shrink-0 shadow-lg">
                 <Car className="w-5 md:w-7 h-5 md:h-7 text-fuchsia-300" />
@@ -388,7 +382,6 @@ export default function UploadsDocument() {
               })}
             </div>
 
-            {/* FOOTER SUBMIT */}
             <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">              
               <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2.5 rounded-xl w-full sm:w-auto justify-center sm:justify-start">
                 <div className="w-2.5 h-2.5 rounded-full bg-fuchsia-500 animate-pulse" />
@@ -417,8 +410,22 @@ export default function UploadsDocument() {
             </div>
           </form>
         </div>
-
       </div>
     </div>
+  );
+}
+
+export default function UploadsDocument() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[linear-gradient(to_right,_#160040,_#9A0680)] text-white gap-2">
+          <Loader2 className="w-8 h-8 animate-spin text-fuchsia-400" />
+          <span className="text-sm animate-pulse">Memuat halaman...</span>
+        </div>
+      }
+    >
+      <UploadsDocumentContent />
+    </Suspense>
   );
 }
