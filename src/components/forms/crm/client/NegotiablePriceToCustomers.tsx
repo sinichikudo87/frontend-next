@@ -172,7 +172,7 @@ export default function NegotiablePriceToCustomers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[linear-gradient(to_right,_#160040,_#9A0680)]">
+      <div className="min-h-screen flex items-center justify-center bg-[linear-gradient(to_right,#160040,#9A0680)]">
         <div className="text-white text-sm animate-pulse">Loading detail negosiasi...</div>
       </div>
     );
@@ -180,7 +180,7 @@ export default function NegotiablePriceToCustomers() {
 
   if (!rentalData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[linear-gradient(to_right,_#160040,_#9A0680)]">
+      <div className="min-h-screen flex items-center justify-center bg-[linear-gradient(to_right,#160040,#9A0680)]">
         <div className="text-white text-sm">Data tidak ditemukan atau tautan tidak valid.</div>
       </div>
     );
@@ -190,7 +190,7 @@ export default function NegotiablePriceToCustomers() {
   const totalUnitCost = rentalData.details.reduce((sum, item) => sum + item.subtotal, 0);
 
   return (
-    <div className="min-h-screen w-full bg-[linear-gradient(to_right,_#160040,_#9A0680)] relative overflow-hidden pb-12 px-3 md:px-0">
+    <div className="min-h-screen w-full bg-[linear-gradient(to_right,#160040,#9A0680)] relative overflow-hidden pb-12 px-3 md:px-0">
 
       <style>{`
         @keyframes floatUp {
@@ -294,7 +294,7 @@ export default function NegotiablePriceToCustomers() {
               </thead>
               <tbody className="divide-y divide-white/5 text-white/90">
                 {rentalData.details.map((item) => (
-                  <tr key={item.detail_id} className="hover:bg-white/[0.02] transition-colors">
+                  <tr key={item.detail_id} className="hover:bg-white/2 transition-colors">
                     <td className="p-4 font-medium text-fuchsia-300">{item.category_name}</td>
                     <td className="p-4 text-center">{item.qty}</td>
                     <td className="p-4">Rp {item.price.toLocaleString("id-ID")}</td>
@@ -319,7 +319,7 @@ export default function NegotiablePriceToCustomers() {
 
           {/* TABLE DESKTOP / MOBILE CONTAINER */}
           <div className="overflow-x-auto rounded-2xl md:rounded-3xl border border-white/20 bg-black/50 backdrop-blur-2xl shadow-2xl">
-            <table className="w-full text-left border-collapse min-w-[800px] text-xs">
+            <table className="w-full text-left border-collapse min-w-200 text-xs">
               <thead>
                 <tr className="border-b-2 border-white/20 bg-black/70 text-[11px] uppercase tracking-wider text-white/90 font-black">
                   <th className="p-4 text-center w-24 border-r border-white/10">Sesi</th>
@@ -328,7 +328,7 @@ export default function NegotiablePriceToCustomers() {
                   <th className="p-4">Status & Nilai Deal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/10 bg-white/[0.01]">
+              <tbody className="divide-y divide-white/10 bg-white/1">
                 {rentalData.logs.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-white/40 italic">
@@ -337,7 +337,7 @@ export default function NegotiablePriceToCustomers() {
                   </tr>
                 ) : (
                   rentalData.logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-white/[0.02] transition-colors align-top">
+                    <tr key={log.id} className="hover:bg-white/2 transition-colors align-top">
                       <td className="p-4 text-center border-r border-white/10 font-black text-fuchsia-300 bg-black/10">
                         Sesi #{log.sesi}
                       </td>
@@ -452,7 +452,7 @@ export default function NegotiablePriceToCustomers() {
 
       {/* SUCCESS ANIMATION OVERLAY */}
       {showSuccessAnimation && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-opacity duration-300">
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-opacity duration-300">
           <style>{`
             @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
             @keyframes circleBounce { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.15); } 80% { transform: scale(0.95); } 100% { transform: scale(1); opacity: 1; } }
@@ -463,7 +463,7 @@ export default function NegotiablePriceToCustomers() {
           `}</style>
           <div className="relative bg-white/10 border border-white/20 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl backdrop-blur-2xl flex flex-col items-center justify-center overflow-hidden animate-pop-in">
             <div className="absolute -top-12 w-32 h-32 bg-emerald-500/30 rounded-full blur-2xl animate-pulse" />
-            <div className="absolute -bottom-12 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-2xl animate-pulse" />
+            <div className="absolute -bottom-12 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-2xl animate-full pulse" />
             <div className="relative w-20 h-20 bg-emerald-500 rounded-full border-4 border-white/20 flex items-center justify-center shadow-lg shadow-emerald-500/40 mb-5 animate-circle-bounce">
               <CheckCircle2 className="w-10 h-10 text-white" />
             </div>
